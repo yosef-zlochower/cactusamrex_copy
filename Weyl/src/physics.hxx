@@ -6,6 +6,7 @@
 #include <dual.hxx>
 
 #include <cmath>
+#include <iostream>
 
 namespace Weyl {
 using namespace std;
@@ -187,8 +188,14 @@ template <typename T> constexpr vec4<T, UP> calc_et(const mat4<T, UP, UP> &gu) {
   const auto e = one<T>()();
   const vec4<T, DN> etl([&](int a) { return a == 0 ? e : z; });
   const auto et = raise(gu, etl);
-  const auto etlen = sqrt(-dot(etl, et));
-  assert(!isnan1(etlen) && etlen >= 1.0e-12);
+  const auto etlen = sqrt(abs(dot(etl, et)));
+//  std::cerr << "ZZZZZZZZZ" << std::endl;
+//  std::cerr << etl << std::endl;
+//  std::cerr << gu << std::endl;
+//  std::cerr << et << std::endl;
+//  std::cerr << etlen << std::endl;
+//  assert(!isnan1(etlen) && etlen >= 1.0e-12);
+  assert(!isnan1(etlen));
   return et / etlen;
 }
 

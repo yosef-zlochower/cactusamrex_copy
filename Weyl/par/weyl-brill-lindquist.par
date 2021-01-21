@@ -1,5 +1,6 @@
 ActiveThorns = "
     ADMBase
+    TMunuBase
     BrillLindquist
     CarpetX
     Formaline
@@ -10,7 +11,7 @@ ActiveThorns = "
 "
 
 CarpetX::verbose = yes
-
+Cactus::presync_mode = "mixed-error"
 Cactus::cctk_show_schedule = yes
 
 Cactus::terminate = "time"

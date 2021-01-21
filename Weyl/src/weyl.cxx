@@ -11,6 +11,7 @@
 
 #include <cmath>
 
+#include <iostream>
 namespace Weyl {
 using namespace Loop;
 using namespace std;
@@ -312,6 +313,164 @@ extern "C" void Weyl_Weyl(CCTK_ARGUMENTS) {
 
         const vec3<CCTK_REAL, UP> coord3{p.x, p.y, p.z};
 
+  if(sqrt(p.x*p.x + p.y*p.y + p.z*p.z) < 5.0) {
+        gf_Gamma4ttt_(p.I) = 0.0;
+        gf_Gamma4ttx_(p.I) = 0.0;
+        gf_Gamma4tty_(p.I) = 0.0;
+        gf_Gamma4ttz_(p.I) = 0.0;
+        gf_Gamma4txx_(p.I) = 0.0;
+        gf_Gamma4txy_(p.I) = 0.0;
+        gf_Gamma4txz_(p.I) = 0.0;
+        gf_Gamma4tyy_(p.I) = 0.0;
+        gf_Gamma4tyz_(p.I) = 0.0;
+        gf_Gamma4tzz_(p.I) = 0.0;
+
+        gf_Gamma4xtt_(p.I) = 0.0;
+        gf_Gamma4xtx_(p.I) = 0.0;
+        gf_Gamma4xty_(p.I) = 0.0;
+        gf_Gamma4xtz_(p.I) = 0.0;
+        gf_Gamma4xxx_(p.I) = 0.0;
+        gf_Gamma4xxy_(p.I) = 0.0;
+        gf_Gamma4xxz_(p.I) = 0.0;
+        gf_Gamma4xyy_(p.I) = 0.0;
+        gf_Gamma4xyz_(p.I) = 0.0;
+        gf_Gamma4xzz_(p.I) = 0.0;
+
+        gf_Gamma4ytt_(p.I) = 0.0;
+        gf_Gamma4ytx_(p.I) = 0.0;
+        gf_Gamma4yty_(p.I) = 0.0;
+        gf_Gamma4ytz_(p.I) = 0.0;
+        gf_Gamma4yxx_(p.I) = 0.0;
+        gf_Gamma4yxy_(p.I) = 0.0;
+        gf_Gamma4yxz_(p.I) = 0.0;
+        gf_Gamma4yyy_(p.I) = 0.0;
+        gf_Gamma4yyz_(p.I) = 0.0;
+        gf_Gamma4yzz_(p.I) = 0.0;
+
+        gf_Gamma4ztt_(p.I) = 0.0;
+        gf_Gamma4ztx_(p.I) = 0.0;
+        gf_Gamma4zty_(p.I) = 0.0;
+        gf_Gamma4ztz_(p.I) = 0.0;
+        gf_Gamma4zxx_(p.I) = 0.0;
+        gf_Gamma4zxy_(p.I) = 0.0;
+        gf_Gamma4zxz_(p.I) = 0.0;
+        gf_Gamma4zyy_(p.I) = 0.0;
+        gf_Gamma4zyz_(p.I) = 0.0;
+        gf_Gamma4zzz_(p.I) = 0.0;
+
+        gf_rm4txtx_(p.I) = 0.0;
+        gf_rm4txty_(p.I) = 0.0;
+        gf_rm4txtz_(p.I) = 0.0;
+        gf_rm4txxy_(p.I) = 0.0;
+        gf_rm4txxz_(p.I) = 0.0;
+        gf_rm4txyz_(p.I) = 0.0;
+
+        gf_rm4tyty_(p.I) = 0.0;
+        gf_rm4tytz_(p.I) = 0.0;
+        gf_rm4tyxy_(p.I) = 0.0;
+        gf_rm4tyxz_(p.I) = 0.0;
+        gf_rm4tyyz_(p.I) = 0.0;
+
+        gf_rm4tztz_(p.I) = 0.0;
+        gf_rm4tzxy_(p.I) = 0.0;
+        gf_rm4tzxz_(p.I) = 0.0;
+        gf_rm4tzyz_(p.I) = 0.0;
+
+        gf_rm4xyxy_(p.I) = 0.0;
+        gf_rm4xyxz_(p.I) = 0.0;
+        gf_rm4xyyz_(p.I) = 0.0;
+
+        gf_rm4xzxz_(p.I) = 0.0;
+        gf_rm4xzyz_(p.I) = 0.0;
+
+        gf_rm4yzyz_(p.I) = 0.0;
+
+
+        gf_rsc4_(p.I) = 0.0;
+
+        gf_c4txtx_(p.I) = 0.0;
+        gf_c4txty_(p.I) = 0.0;
+        gf_c4txtz_(p.I) = 0.0;
+        gf_c4txxy_(p.I) = 0.0;
+        gf_c4txxz_(p.I) = 0.0;
+        gf_c4txyz_(p.I) = 0.0;
+
+        gf_c4tyty_(p.I) = 0.0;
+        gf_c4tytz_(p.I) = 0.0;
+        gf_c4tyxy_(p.I) = 0.0;
+        gf_c4tyxz_(p.I) = 0.0;
+        gf_c4tyyz_(p.I) = 0.0;
+
+        gf_c4tztz_(p.I) = 0.0;
+        gf_c4tzxy_(p.I) = 0.0;
+        gf_c4tzxz_(p.I) = 0.0;
+        gf_c4tzyz_(p.I) = 0.0;
+
+        gf_c4xyxy_(p.I) = 0.0;
+        gf_c4xyxz_(p.I) = 0.0;
+        gf_c4xyyz_(p.I) = 0.0;
+
+        gf_c4xzxz_(p.I) = 0.0;
+        gf_c4xzyz_(p.I) = 0.0;
+
+        gf_c4yzyz_(p.I) = 0.0;
+
+        gf_mret_(p.I) = 0.0;
+        gf_mrex_(p.I) = 0.0;
+        gf_mrey_(p.I) = 0.0;
+        gf_mrez_(p.I) = 0.0;
+        gf_mimt_(p.I) = 0.0;
+        gf_mimx_(p.I) = 0.0;
+        gf_mimy_(p.I) = 0.0;
+        gf_mimz_(p.I) = 0.0;
+
+        gf_Lambda_(p.I) = 0.0;
+        gf_Phi00_(p.I) = 0.0;
+        gf_Phi11_(p.I) = 0.0;
+        gf_Phi22_(p.I) = 0.0;
+        gf_Phi10re_(p.I) = 0.0;
+        gf_Phi10im_(p.I) = 0.0;
+        gf_Phi20re_(p.I) = 0.0;
+        gf_Phi20im_(p.I) = 0.0;
+        gf_Phi21re_(p.I) = 0.0;
+        gf_Phi21im_(p.I) = 0.0;
+
+        gf_Psi0re_(p.I) = 0.0;
+        gf_Psi0im_(p.I) = 0.0;
+        gf_Psi1re_(p.I) = 0.0;
+        gf_Psi1im_(p.I) = 0.0;
+        gf_Psi2re_(p.I) = 0.0;
+        gf_Psi2im_(p.I) = 0.0;
+        gf_Psi3re_(p.I) = 0.0;
+        gf_Psi3im_(p.I) = 0.0;
+        gf_Psi4re_(p.I) = 0.0;
+        gf_Psi4im_(p.I) = 0.0;
+
+        gf_npkappare_(p.I) = 0.0;
+        gf_npkappaim_(p.I) = 0.0;
+        gf_npsigmare_(p.I) = 0.0;
+        gf_npsigmaim_(p.I) = 0.0;
+        gf_nprhore_(p.I) = 0.0;
+        gf_nprhoim_(p.I) = 0.0;
+        gf_nptaure_(p.I) = 0.0;
+        gf_nptauim_(p.I) = 0.0;
+        gf_npepsilonre_(p.I) = 0.0;
+        gf_npepsilonim_(p.I) = 0.0;
+        gf_npbetare_(p.I) = 0.0;
+        gf_npbetaim_(p.I) = 0.0;
+        gf_npalphare_(p.I) = 0.0;
+        gf_npalphaim_(p.I) = 0.0;
+        gf_npgammare_(p.I) = 0.0;
+        gf_npgammaim_(p.I) = 0.0;
+        gf_nppire_(p.I) = 0.0;
+        gf_nppiim_(p.I) = 0.0;
+        gf_npmure_(p.I) = 0.0;
+        gf_npmuim_(p.I) = 0.0;
+        gf_nplambdare_(p.I) = 0.0;
+        gf_nplambdaim_(p.I) = 0.0;
+        gf_npnure_(p.I) = 0.0;
+        gf_npnuim_(p.I) = 0.0;
+  } else {
         const weyl_vars<CCTK_REAL> vars(
             cctk_time, coord3,                                 //
             gf_gamma_(p.I), gf_alpha_(p.I), gf_beta_(p.I),     //
@@ -485,6 +644,7 @@ extern "C" void Weyl_Weyl(CCTK_ARGUMENTS) {
         gf_nplambdaim_(p.I) = imag(vars.nplambda);
         gf_npnure_(p.I) = real(vars.npnu);
         gf_npnuim_(p.I) = imag(vars.npnu);
+   }
       });
 }
 
