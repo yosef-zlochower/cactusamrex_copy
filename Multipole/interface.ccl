@@ -9,7 +9,7 @@ REQUIRES FUNCTION IO_TruncateOutputFiles
 
 public:
 
-CCTK_REAL harmonics type=GF timelevels=1 tags='index={0 0 0}'
+CCTK_REAL harmonics type=GF timelevels=1 tags='index={0 0 0} checkpoint="no"'
 {
   harmonic_re, harmonic_im
 } "Spherical harmonics"

@@ -278,3 +278,7 @@ SCHEDULE GROUP Z4c_RHSGroup IN ODESolvers_RHS
 SCHEDULE GROUP Z4c_PostStepGroup AT postrestrict
 {
 } "Post-process Z4c variables"
+
+SCHEDULE GROUP Z4c_PostStepGroup AT postrestrictinitial
+{
+} "Post-process Z4c variables"

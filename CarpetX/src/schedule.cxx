@@ -490,24 +490,28 @@ void error_if_invalid(const GHExt::GlobalData::ArrayGroupData &groupdata,
                       int vi, int tl, const valid_t &required,
                       const function<string()> &msg) {
   const valid_t &have = groupdata.valid.at(tl).at(vi).get();
-  if (CCTK_BUILTIN_EXPECT((required & ~have).valid_any(), false))
+  if (CCTK_BUILTIN_EXPECT((required & ~have).valid_any(), false)) {
+    CCTK_Abort(0,0);
     CCTK_VERROR("%s: Array \"%s\" is invalid on time level %d; "
                 "required %s, found %s",
                 msg().c_str(), CCTK_FullVarName(groupdata.firstvarindex + vi),
                 tl, string(required).c_str(),
                 string(groupdata.valid.at(tl).at(vi)).c_str());
+  }
 }
 void warn_if_invalid(const GHExt::GlobalData::ArrayGroupData &groupdata,
                      int vi, int tl, const valid_t &required,
                      const function<string()> &msg) {
   const valid_t &have = groupdata.valid.at(tl).at(vi).get();
-  if (CCTK_BUILTIN_EXPECT((required & ~have).valid_any(), false))
+  if (CCTK_BUILTIN_EXPECT((required & ~have).valid_any(), false)) {
+    CCTK_Abort(0,0);
     CCTK_VWARN(CCTK_WARN_ALERT,
                "%s: Array \"%s\" is invalid on time level %d; "
                "required %s, found %s",
                msg().c_str(), CCTK_FullVarName(groupdata.firstvarindex + vi),
                tl, string(required).c_str(),
                string(groupdata.valid.at(tl).at(vi)).c_str());
+  }
 }
 
 // Set arrays to nan

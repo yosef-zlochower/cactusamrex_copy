@@ -746,6 +746,10 @@ void SetupLevel(const int level, const amrex::BoxArray &ba,
     int ierr = CCTK_GroupData(gi, &group);
     assert(!ierr);
 
+    cGroupDynamicData data;
+    ierr = CCTK_GroupDynamicData(saved_cctkGH, gi, &data);
+    assert(!ierr);
+
     /* only grid functions live on levels (and the grid) */
     if (group.grouptype != CCTK_GF)
       continue;
@@ -794,8 +798,8 @@ void SetupLevel(const int level, const amrex::BoxArray &ba,
                                                     : amrex::IndexType::NODE,
                              groupdata.indextype[2] ? amrex::IndexType::CELL
                                                     : amrex::IndexType::NODE));
-    groupdata.mfab.resize(group.numtimelevels);
-    groupdata.valid.resize(group.numtimelevels);
+    groupdata.mfab.resize(data.activetimelevels);
+    groupdata.valid.resize(data.activetimelevels);
     for (int tl = 0; tl < int(groupdata.mfab.size()); ++tl) {
       groupdata.mfab.at(tl) = make_unique<amrex::MultiFab>(
           gba, dm, groupdata.numvars, amrex::IntVect(groupdata.nghostzones));
