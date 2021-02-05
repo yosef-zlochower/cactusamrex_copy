@@ -247,7 +247,7 @@ SCHEDULE GROUP Z4c_InitialGroup AT initial AFTER ADMBase_PostInitial
 {
 } "Convert ADM to Z4c variables"
 
-SCHEDULE GROUP Z4c_PostStepGroup AT initial AFTER Z4c_Initial
+SCHEDULE GROUP Z4c_PostStepGroup AT initial after Z4c_InitialGroup
 {
 } "Post-process Z4c variables"
 
