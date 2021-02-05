@@ -2,7 +2,7 @@
 
 IMPLEMENTS: Z4c
 
-INHERITS: ADMBase TmunuBase
+INHERITS: ADMBase TmunuBase CarpetX
 
 USES INCLUDE HEADER: dual.hxx
 USES INCLUDE HEADER: loop.hxx

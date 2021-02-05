@@ -8,6 +8,7 @@ SRCS =						\
 	boundaries.cxx				\
 	constraints.cxx				\
 	constraintboundaries.cxx		\
+	error.cxx				\
 	enforce.cxx				\
 	initial1.cxx				\
 	initial2.cxx				\

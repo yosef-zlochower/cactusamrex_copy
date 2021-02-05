@@ -282,3 +282,19 @@ SCHEDULE GROUP Z4c_PostStepGroup AT postrestrict
 SCHEDULE GROUP Z4c_PostStepGroup AT postrestrictinitial
 {
 } "Post-process Z4c variables"
+
+
+# error estimation based on metric determinant
+
+SCHEDULE Z4c_Estimate AS EstimateError AT postinitial
+{
+  LANG: C
+  WRITES: CarpetX::regrid_error(interior)
+} "Estimate error"
+
+SCHEDULE Z4c_Estimate AS EstimateError AT poststep
+{
+  LANG: C
+  READS: chi(interior)
+  WRITES: CarpetX::regrid_error(interior)
+} "Estimate error"
