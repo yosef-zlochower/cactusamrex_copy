@@ -30,17 +30,72 @@ SCHEDULE Weyl_Weyl AT analysis
   READS: ADMBase::dtcurv(everywhere)
   READS: ADMBase::dt2lapse(everywhere)
   READS: ADMBase::dt2shift(everywhere)
-  WRITES: metric4(interior)   # We could write this everywhere
-  WRITES: Gamma4(interior)
-  WRITES: riemann4(interior)
-  WRITES: ricci4(interior)
-  WRITES: ricciscalar4(interior)
-  WRITES: weyl4(interior)
-  WRITES: tetrad_l(interior)
-  WRITES: tetrad_n(interior)
-  WRITES: tetrad_mre(interior)
-  WRITES: tetrad_mim(interior)
-  WRITES: ricci_scalars(interior)
-  WRITES: weyl_scalars(interior)
-  WRITES: spin_coefficients(interior)
+  WRITES: metric4(interiorwithboundary)   # We could write this everywhere
+  WRITES: Gamma4(interiorwithboundary)
+  WRITES: riemann4(interiorwithboundary)
+  WRITES: ricci4(interiorwithboundary)
+  WRITES: ricciscalar4(interiorwithboundary)
+  WRITES: weyl4(interiorwithboundary)
+  WRITES: tetrad_l(interiorwithboundary)
+  WRITES: tetrad_n(interiorwithboundary)
+  WRITES: tetrad_mre(interiorwithboundary)
+  WRITES: tetrad_mim(interiorwithboundary)
+  WRITES: ricci_scalars(interiorwithboundary)
+  WRITES: weyl_scalars(interiorwithboundary)
+  WRITES: spin_coefficients(interiorwithboundary)
+
+  SYNC: metric4
+  SYNC: Gamma4
+  SYNC: riemann4
+  SYNC: ricci4
+  SYNC: ricciscalar4
+  SYNC: weyl4
+  SYNC: tetrad_l
+  SYNC: tetrad_n
+  SYNC: tetrad_mre
+  SYNC: tetrad_mim
+  SYNC: ricci_scalars
+  SYNC: weyl_scalars
+  SYNC: spin_coefficients
+} "Calculate Weyl tensor"
+
+SCHEDULE Weyl_Weyl AT postinitial AFTER ADMBase_SetADMVars
+{
+  LANG: C
+  READS: ADMBase::metric(everywhere)
+  READS: ADMBase::lapse(everywhere)
+  READS: ADMBase::shift(everywhere)
+  READS: ADMBase::curv(everywhere)
+  READS: ADMBase::dtlapse(everywhere)
+  READS: ADMBase::dtshift(everywhere)
+  READS: ADMBase::dtcurv(everywhere)
+  READS: ADMBase::dt2lapse(everywhere)
+  READS: ADMBase::dt2shift(everywhere)
+  WRITES: metric4(interiorwithboundary)   # We could write this everywhere
+  WRITES: Gamma4(interiorwithboundary)
+  WRITES: riemann4(interiorwithboundary)
+  WRITES: ricci4(interiorwithboundary)
+  WRITES: ricciscalar4(interiorwithboundary)
+  WRITES: weyl4(interiorwithboundary)
+  WRITES: tetrad_l(interiorwithboundary)
+  WRITES: tetrad_n(interiorwithboundary)
+  WRITES: tetrad_mre(interiorwithboundary)
+  WRITES: tetrad_mim(interiorwithboundary)
+  WRITES: ricci_scalars(interiorwithboundary)
+  WRITES: weyl_scalars(interiorwithboundary)
+  WRITES: spin_coefficients(interiorwithboundary)
+
+  SYNC: metric4
+  SYNC: Gamma4
+  SYNC: riemann4
+  SYNC: ricci4
+  SYNC: ricciscalar4
+  SYNC: weyl4
+  SYNC: tetrad_l
+  SYNC: tetrad_n
+  SYNC: tetrad_mre
+  SYNC: tetrad_mim
+  SYNC: ricci_scalars
+  SYNC: weyl_scalars
+  SYNC: spin_coefficients
 } "Calculate Weyl tensor"
