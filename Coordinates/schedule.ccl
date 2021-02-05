@@ -7,3 +7,19 @@ SCHEDULE Coordinates_Setup AT basegrid
   WRITES: cell_coords(everywhere)
   WRITES: cell_volume(everywhere)
 } "Set coordinate grid functions"
+
+SCHEDULE Coordinates_Setup AT postregrid
+{
+  LANG: C
+  WRITES: vertex_coords(everywhere)
+  WRITES: cell_coords(everywhere)
+  WRITES: cell_volume(everywhere)
+} "Set coordinate grid functions"
+
+SCHEDULE Coordinates_Setup AT postrestrict # silly but CarpetX complains otherwise
+{
+  LANG: C
+  WRITES: vertex_coords(everywhere)
+  WRITES: cell_coords(everywhere)
+  WRITES: cell_volume(everywhere)
+} "Set coordinate grid functions"
