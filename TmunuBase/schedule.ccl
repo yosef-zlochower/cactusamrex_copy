@@ -4,6 +4,10 @@ SCHEDULE GROUP TmunuBase_SetTmunuVars AT initial
 {
 } "Schedule group for setting T_munu"
 
+SCHEDULE GROUP TmunuBase_SetTmunuVars AT postrestrict
+{
+} "Schedule group for setting T_munu"
+
 SCHEDULE GROUP TmunuBase_SetTmunuVars AT postregrid
 {
 } "Schedule group for setting T_munu"
