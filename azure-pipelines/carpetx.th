@@ -128,6 +128,7 @@ ExternalLibraries/zlib
 !TYPE     = git
 !URL      = https://bitbucket.org/eschnett/cactusamrex.git
 !REPO_PATH= $2
+!REPO_BRANCH = qc0Test
 !CHECKOUT = CarpetX/Kokkos CarpetX/NSIMD CarpetX/SHTOOLS CarpetX/Silo CarpetX/libsharp
 CarpetX/ADMBase
 CarpetX/AHFinder
@@ -138,6 +139,7 @@ CarpetX/Boost
 CarpetX/BrillLindquist
 CarpetX/CarpetX
 CarpetX/Coordinates
+CarpetX/Multipole
 CarpetX/DGCoordinates
 CarpetX/DGWaveToy
 CarpetX/ErrorEstimator
@@ -204,3 +206,11 @@ THCBase/HRSCCore
 # !CHECKOUT =
 # THCExtra/EOS_Thermal
 # THCExtra/PizzaNumUtils
+
+# Numerical
+!TARGET   = $ARR
+!TYPE     = git
+!URL      = https://bitbucket.org/cactuscode/numerical.git
+!REPO_PATH= $2
+!CHECKOUT =
+Numerical/AEILocalInterp
