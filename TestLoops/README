@@ -1,0 +1,9 @@
+Cactus Code Thorn TestLoops
+Author(s)    : Roland Haas <rhaas@illinois.edu>
+Maintainer(s): Roland Haas <rhaas@illinois.edu>
+Licence      : NCSA
+--------------------------------------------------------------------------
+
+1. Purpose
+
+This thorn tests the looping macros and templates in CarpetX.

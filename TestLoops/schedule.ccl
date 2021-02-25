@@ -1,0 +1,10 @@
+# Schedule definitions for thorn TestLoops
+
+STORAGE: gf000
+STORAGE: template_and_macro_diff
+
+SCHEDULE TestLoops_Set AT initial
+{
+  LANG: C
+  WRITES: gf000(all), template_and_macro_diff(all)
+} "Set up test data"

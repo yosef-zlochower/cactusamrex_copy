@@ -1,0 +1,11 @@
+# Interface definition for thorn TestLoops
+implements: TestLoops
+inherits: CarpetX
+
+uses include header: loop.hxx
+uses include header: loopcontrol.h
+
+private:
+
+CCTK_REAL gf000 TYPE=gf TAGS='index={0 0 0}' "Test grid function"
+CCTK_REAL template_and_macro_diff TYPE=scalar "Record if looping template and macro agreee"
