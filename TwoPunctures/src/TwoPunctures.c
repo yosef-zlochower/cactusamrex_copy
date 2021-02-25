@@ -424,18 +424,10 @@ TwoPunctures (CCTK_ARGUMENTS)
 
   CCTK_INFO ("Interpolating result");
 
-  const int di = 1;
-  const int dj = di * (cctk_ash[0]); // one extra grid point for vertex centering
-  const int dk = dj * (cctk_ash[1]); // one extra grid point for vertex centering
-  const int np = dk * (cctk_ash[2]); // one extra grid point for vertex centering
-
-  for(int i=0; i < cctk_lsh[0]; i++)
-  for(int j=0; j < cctk_lsh[1]; j++)
-  for(int k=0; k < cctk_lsh[2]; k++)
-//  CCTK_LOOP3_ALL(TwoPunctures, cctkGH, i,j,k)
+  CCTK_LOOP3_ALL(TwoPunctures, cctkGH, i,j,k)
       {
 
-        const int ind = i*di + j*dj + k*dk;
+        const int ind = CCTK_GFINDEX3D (cctkGH, i, j, k);
 
         CCTK_REAL xx, yy, zz;
         xx = vcoordx[ind] - center_offset[0];
@@ -629,14 +621,17 @@ TwoPunctures (CCTK_ARGUMENTS)
           SWAP (kxy[ind], kyz[ind]);
         } /* if swap_xz */
 
-      }// CCTK_ENDLOOP3_ALL(TwoPunctures);
+      } CCTK_ENDLOOP3_ALL(TwoPunctures);
 
   if (use_sources && rescale_sources)
   {
     assert(0);                  // TODO: Implement via critical region
+    assert(cctk_ash[0] == cctk_lsh[0]);
+    assert(cctk_ash[1] == cctk_lsh[1]);
+    assert(cctk_ash[2] == cctk_lsh[2]);
 #pragma omp single
     Rescale_Sources(cctkGH,
-                    np,
+                    cctk_lsh[0]*cctk_lsh[1]*cctk_lsh[2],
                     vcoordx, vcoordy, vcoordz,
                     NULL,
                     gxx, gyy, gzz,
