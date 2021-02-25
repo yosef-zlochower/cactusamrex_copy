@@ -425,13 +425,13 @@ TwoPunctures (CCTK_ARGUMENTS)
   CCTK_INFO ("Interpolating result");
 
   const int di = 1;
-  const int dj = di * (cctk_ash[0] + 1); // one extra grid point for vertex centering
-  const int dk = dj * (cctk_ash[1] + 1); // one extra grid point for vertex centering
-  const int np = dk * (cctk_ash[2] + 1); // one extra grid point for vertex centering
+  const int dj = di * (cctk_ash[0]); // one extra grid point for vertex centering
+  const int dk = dj * (cctk_ash[1]); // one extra grid point for vertex centering
+  const int np = dk * (cctk_ash[2]); // one extra grid point for vertex centering
 
-  for(int i=0; i < cctk_lsh[0]+1; i++)
-  for(int j=0; j < cctk_lsh[1]+1; j++)
-  for(int k=0; k < cctk_lsh[2]+1; k++)
+  for(int i=0; i < cctk_lsh[0]; i++)
+  for(int j=0; j < cctk_lsh[1]; j++)
+  for(int k=0; k < cctk_lsh[2]; k++)
 //  CCTK_LOOP3_ALL(TwoPunctures, cctkGH, i,j,k)
       {
 
