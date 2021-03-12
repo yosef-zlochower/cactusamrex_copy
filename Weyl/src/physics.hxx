@@ -188,14 +188,17 @@ template <typename T> constexpr vec4<T, UP> calc_et(const mat4<T, UP, UP> &gu) {
   const auto e = one<T>()();
   const vec4<T, DN> etl([&](int a) { return a == 0 ? e : z; });
   const auto et = raise(gu, etl);
-  const auto etlen = sqrt(abs(dot(etl, et)));
-//  std::cerr << "ZZZZZZZZZ" << std::endl;
-//  std::cerr << etl << std::endl;
-//  std::cerr << gu << std::endl;
-//  std::cerr << et << std::endl;
-//  std::cerr << etlen << std::endl;
-//  assert(!isnan1(etlen) && etlen >= 1.0e-12);
-  assert(!isnan1(etlen));
+  const auto etlen = sqrt(-dot(etl, et));
+  // This is necessary near a singularity
+  if (etlen < 1.0e-12)
+    return vec4<T, UP>(1, 0, 0, 0);
+  if (!(!isnan1(etlen) && etlen >= 1.0e-12)) {
+    ostringstream buf;
+    buf << "\ngu=" << gu << "\netl=" << etl << "\netlen=" << etlen
+        << "\nisnan1(etlen)=" << isnan1(etlen);
+    CCTK_VERROR(buf.str().c_str());
+  }
+  assert(!isnan1(etlen) && etlen >= 1.0e-12);
   return et / etlen;
 }
 

@@ -1,12 +1,18 @@
 # Schedule definitions for thorn Weyl
 
 STORAGE: metric4
-STORAGE: Gamma4
-STORAGE: riemann4
-STORAGE: ricci4
-STORAGE: ricciscalar4
-STORAGE: weyl4
-STORAGE: tetrad_l tetrad_n tetrad_mre tetrad_mim
+## STORAGE: Gamma4
+## STORAGE: riemann4
+## STORAGE: ricci4
+## STORAGE: ricciscalar4
+## STORAGE: weyl4
+## STORAGE: tetrad_l
+## STORAGE: tetrad_n
+## STORAGE: tetrad_mre
+## STORAGE: tetrad_mim
+## STORAGE: ricci_scalars
+STORAGE: weyl_scalars
+## STORAGE: spin_coefficients
 
 
 
@@ -31,32 +37,20 @@ SCHEDULE Weyl_Weyl AT analysis
   READS: ADMBase::dt2lapse(everywhere)
   READS: ADMBase::dt2shift(everywhere)
   WRITES: metric4(interiorwithboundary)   # We could write this everywhere
-  WRITES: Gamma4(interiorwithboundary)
-  WRITES: riemann4(interiorwithboundary)
-  WRITES: ricci4(interiorwithboundary)
-  WRITES: ricciscalar4(interiorwithboundary)
-  WRITES: weyl4(interiorwithboundary)
-  WRITES: tetrad_l(interiorwithboundary)
-  WRITES: tetrad_n(interiorwithboundary)
-  WRITES: tetrad_mre(interiorwithboundary)
-  WRITES: tetrad_mim(interiorwithboundary)
-  WRITES: ricci_scalars(interiorwithboundary)
+  ## WRITES: Gamma4(interior)
+  ## WRITES: riemann4(interior)
+  ## WRITES: ricci4(interior)
+  ## WRITES: ricciscalar4(interior)
+  ## WRITES: weyl4(interior)
+  ## WRITES: tetrad_l(interior)
+  ## WRITES: tetrad_n(interior)
+  ## WRITES: tetrad_mre(interior)
+  ## WRITES: tetrad_mim(interior)
+  ## WRITES: ricci_scalars(interior)
   WRITES: weyl_scalars(interiorwithboundary)
-  WRITES: spin_coefficients(interiorwithboundary)
-
+  ## WRITES: spin_coefficients(interior)
   SYNC: metric4
-  SYNC: Gamma4
-  SYNC: riemann4
-  SYNC: ricci4
-  SYNC: ricciscalar4
-  SYNC: weyl4
-  SYNC: tetrad_l
-  SYNC: tetrad_n
-  SYNC: tetrad_mre
-  SYNC: tetrad_mim
-  SYNC: ricci_scalars
   SYNC: weyl_scalars
-  SYNC: spin_coefficients
 } "Calculate Weyl tensor"
 
 SCHEDULE Weyl_Weyl AT postinitial AFTER ADMBase_SetADMVars
@@ -72,30 +66,18 @@ SCHEDULE Weyl_Weyl AT postinitial AFTER ADMBase_SetADMVars
   READS: ADMBase::dt2lapse(everywhere)
   READS: ADMBase::dt2shift(everywhere)
   WRITES: metric4(interiorwithboundary)   # We could write this everywhere
-  WRITES: Gamma4(interiorwithboundary)
-  WRITES: riemann4(interiorwithboundary)
-  WRITES: ricci4(interiorwithboundary)
-  WRITES: ricciscalar4(interiorwithboundary)
-  WRITES: weyl4(interiorwithboundary)
-  WRITES: tetrad_l(interiorwithboundary)
-  WRITES: tetrad_n(interiorwithboundary)
-  WRITES: tetrad_mre(interiorwithboundary)
-  WRITES: tetrad_mim(interiorwithboundary)
-  WRITES: ricci_scalars(interiorwithboundary)
+  ## WRITES: Gamma4(interior)
+  ## WRITES: riemann4(interior)
+  ## WRITES: ricci4(interior)
+  ## WRITES: ricciscalar4(interior)
+  ## WRITES: weyl4(interior)
+  ## WRITES: tetrad_l(interior)
+  ## WRITES: tetrad_n(interior)
+  ## WRITES: tetrad_mre(interior)
+  ## WRITES: tetrad_mim(interior)
+  ## WRITES: ricci_scalars(interior)
   WRITES: weyl_scalars(interiorwithboundary)
-  WRITES: spin_coefficients(interiorwithboundary)
-
+  ## WRITES: spin_coefficients(interior)
   SYNC: metric4
-  SYNC: Gamma4
-  SYNC: riemann4
-  SYNC: ricci4
-  SYNC: ricciscalar4
-  SYNC: weyl4
-  SYNC: tetrad_l
-  SYNC: tetrad_n
-  SYNC: tetrad_mre
-  SYNC: tetrad_mim
-  SYNC: ricci_scalars
   SYNC: weyl_scalars
-  SYNC: spin_coefficients
 } "Calculate Weyl tensor"

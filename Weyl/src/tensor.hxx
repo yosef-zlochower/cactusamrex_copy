@@ -68,6 +68,70 @@ constexpr int factorial(int n) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+template <typename F,
+          typename R = remove_cv_t<remove_reference_t<result_of_t<F(int)> > > >
+constexpr R sum41(const F &f) {
+  R s = zero<R>()();
+  for (int x = 0; x < 4; ++x)
+    s += f(x);
+  return s;
+}
+
+template <typename F, typename R = remove_cv_t<
+                          remove_reference_t<result_of_t<F(int, int)> > > >
+constexpr R sum42(const F &f) {
+  R s = zero<R>()();
+  for (int x = 0; x < 4; ++x)
+    for (int y = 0; y < 4; ++y)
+      s += f(x, y);
+  return s;
+}
+
+template <typename F, typename R = remove_cv_t<
+                          remove_reference_t<result_of_t<F(int, int, int)> > > >
+constexpr R sum43(const F &f) {
+  R s = zero<R>()();
+  for (int x = 0; x < 4; ++x)
+    for (int y = 0; y < 4; ++y)
+      for (int z = 0; z < 4; ++z)
+        s += f(x, y, z);
+  return s;
+}
+
+template <typename F, typename R = remove_cv_t<remove_reference_t<
+                          result_of_t<F(int, int, int, int)> > > >
+constexpr R sum44(const F &f) {
+  R s = zero<R>()();
+  for (int x = 0; x < 4; ++x)
+    for (int y = 0; y < 4; ++y)
+      for (int z = 0; z < 4; ++z)
+        for (int w = 0; w < 4; ++w)
+          s += f(x, y, z, w);
+  return s;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename F, typename T> constexpr T fold(const F &f, const T &x) {
+  return x;
+}
+template <typename F, typename T, typename... Ts>
+constexpr T fold(const F &f, const T &x0, const T &x1, const Ts &...xs) {
+  return fold(f, fold(f, x0, x1), xs...);
+}
+
+template <typename T> constexpr T add() { return T(0); }
+// template <typename T>
+//  constexpr  T add(const T &x) {
+//   return x;
+// }
+template <typename T, typename... Ts>
+constexpr T add(const T &x, const Ts &...xs) {
+  return x + add(xs...);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <typename T> struct nan {
   constexpr T operator()() const { return NAN; }
 };
@@ -116,43 +180,28 @@ public:
   constexpr vec3(const vect<T, 3> &elts) : elts(elts) {}
   constexpr vec3(vect<T, 3> &&elts) : elts(move(elts)) {}
 
-private:
-  static constexpr vector<T> make_vector(T vx, T vy, T vz) {
-    vector<T> vec;
-    vec.reserve(3);
-    vec.push_back(move(vx));
-    vec.push_back(move(vy));
-    vec.push_back(move(vz));
-    return vec;
-  }
-
-public:
   explicit constexpr vec3(T vx, T vy, T vz)
-      : elts(make_vector(move(vx), move(vy), move(vz))) {}
+      : elts(make_tuple(move(vx), move(vy), move(vz))) {}
 
   constexpr vec3(initializer_list<T> v) : elts(v) {}
-  constexpr vec3(const vector<T> &v) : elts(v) {}
-  constexpr vec3(vector<T> &&v) : elts(move(v)) {}
+  // constexpr vec3(const vector<T> &v) : elts(v) {}
+  // constexpr vec3(vector<T> &&v) : elts(move(v)) {}
 
-  vec3(const GF3D<add_const_t<T>, 0, 0, 0> &gf_vx_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_vy_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_vz_, const vect<int, 3> &I)
+  vec3(const GF3D2<add_const_t<T> > &gf_vx_,
+       const GF3D2<add_const_t<T> > &gf_vy_,
+       const GF3D2<add_const_t<T> > &gf_vz_, const vect<int, 3> &I)
       : vec3{gf_vx_(I), gf_vy_(I), gf_vz_(I)} {}
 
-  vec3(const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vx_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vy_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vz_, const vect<int, 3> &I)
+  vec3(const GF3D2<remove_const_t<T> > &gf_vx_,
+       const GF3D2<remove_const_t<T> > &gf_vy_,
+       const GF3D2<remove_const_t<T> > &gf_vz_, const vect<int, 3> &I)
       : vec3{gf_vx_(I), gf_vy_(I), gf_vz_(I)} {}
 
   template <typename F, typename = result_of_t<F(int)> >
   constexpr vec3(const F &f) : elts{f(0), f(1), f(2)} {}
 
-  vec3(const cGH *const cctkGH, allocate)
-      : vec3(T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate())) {}
-
-  void store(const GF3D<T, 0, 0, 0> &gf_vx_, const GF3D<T, 0, 0, 0> &gf_vy_,
-             const GF3D<T, 0, 0, 0> &gf_vz_, const vect<int, 3> &I) const {
+  void store(const GF3D2<T> &gf_vx_, const GF3D2<T> &gf_vy_,
+             const GF3D2<T> &gf_vz_, const vect<int, 3> &I) const {
     const auto &v = *this;
 #ifdef CCTK_DEBUG
     if (!((CCTK_isfinite(v(0))) && (CCTK_isfinite(v(1))) &&
@@ -174,10 +223,17 @@ public:
   T &operator()(int i) { return elts[ind(i)]; }
 
   template <typename U = T>
-
   vec3<remove_cv_t<remove_reference_t<result_of_t<U(vect<int, 3>)> > >, dnup>
   operator()(const vect<int, 3> &I) const {
     return {elts[0](I), elts[1](I), elts[2](I)};
+  }
+  // TODO: Only if T is GF3D5<U>
+  template <typename U = T>
+  vec3<remove_cv_t<
+           remove_reference_t<result_of_t<U(GF3D5layout, vect<int, 3>)> > >,
+       dnup>
+  operator()(const GF3D5layout &layout, const vect<int, 3> &I) const {
+    return {elts[0](layout, I), elts[1](layout, I), elts[2](layout, I)};
   }
 
   friend constexpr vec3<T, dnup> operator+(const vec3<T, dnup> &x) {
@@ -274,9 +330,12 @@ template <typename T, dnup_t dnup1, dnup_t dnup2> class mat3 {
   static_assert(symind(1, 2) == 4, "");
   static_assert(symind(2, 2) == 5, "");
 
+  // nvcc doesn't handle these constexpr expressions
+#ifndef __CUDACC__
   static_assert(ind(1, 0) == ind(0, 1), "");
   static_assert(ind(2, 0) == ind(0, 2), "");
   static_assert(ind(2, 1) == ind(1, 2), "");
+#endif
 
 public:
   explicit constexpr mat3() : elts{nan<vect<T, 6> >()()} {}
@@ -284,86 +343,68 @@ public:
   constexpr mat3(const vect<T, 6> &elts) : elts(elts) {}
   constexpr mat3(vect<T, 6> &&elts) : elts(move(elts)) {}
 
-private:
-  static constexpr vector<T> make_vector(T Axx, T Axy, T Axz, T Ayy, T Ayz,
-                                         T Azz) {
-    vector<T> vec;
-    vec.reserve(6);
-    vec.push_back(move(Axx));
-    vec.push_back(move(Axy));
-    vec.push_back(move(Axz));
-    vec.push_back(move(Ayy));
-    vec.push_back(move(Ayz));
-    vec.push_back(move(Azz));
-    return vec;
-  }
-
-public:
   explicit constexpr mat3(T Axx, T Axy, T Axz, T Ayy, T Ayz, T Azz)
-      : elts(make_vector(move(Axx), move(Axy), move(Axz), move(Ayy), move(Ayz),
-                         move(Azz))) {}
+      : elts(make_tuple(move(Axx), move(Axy), move(Axz), move(Ayy), move(Ayz),
+                        move(Azz))) {}
 
   constexpr mat3(initializer_list<T> A) : elts(A) {}
-  constexpr mat3(const vector<T> &A) : elts(A) {}
-  constexpr mat3(vector<T> &&A) : elts(move(A)) {}
+  // constexpr mat3(const vector<T> &A) : elts(A) {}
+  // constexpr mat3(vector<T> &&A) : elts(move(A)) {}
 
-  mat3(const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axx_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axy_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axz_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Ayy_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Ayz_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Azz_, const vect<int, 3> &I)
+  mat3(const GF3D2<add_const_t<T> > &gf_Axx_,
+       const GF3D2<add_const_t<T> > &gf_Axy_,
+       const GF3D2<add_const_t<T> > &gf_Axz_,
+       const GF3D2<add_const_t<T> > &gf_Ayy_,
+       const GF3D2<add_const_t<T> > &gf_Ayz_,
+       const GF3D2<add_const_t<T> > &gf_Azz_, const vect<int, 3> &I)
       : mat3{gf_Axx_(I), gf_Axy_(I), gf_Axz_(I),
              gf_Ayy_(I), gf_Ayz_(I), gf_Azz_(I)} {}
 
-  mat3(const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axx_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axy_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axz_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Ayy_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Ayz_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Azz_, const vect<int, 3> &I)
+  mat3(const GF3D2<remove_const_t<T> > &gf_Axx_,
+       const GF3D2<remove_const_t<T> > &gf_Axy_,
+       const GF3D2<remove_const_t<T> > &gf_Axz_,
+       const GF3D2<remove_const_t<T> > &gf_Ayy_,
+       const GF3D2<remove_const_t<T> > &gf_Ayz_,
+       const GF3D2<remove_const_t<T> > &gf_Azz_, const vect<int, 3> &I)
       : mat3{gf_Axx_(I), gf_Axy_(I), gf_Axz_(I),
              gf_Ayy_(I), gf_Ayz_(I), gf_Azz_(I)} {}
 
   template <typename F, typename = result_of_t<F(int, int)> >
   constexpr mat3(const F &f)
       : elts{f(0, 0), f(0, 1), f(0, 2), f(1, 1), f(1, 2), f(2, 2)} {
-#ifdef CCTK_DEBUG
-    // Check symmetry
-    const T f10 = f(1, 0);
-    const T f20 = f(2, 0);
-    const T f21 = f(1, 2);
-    const auto scale = norm1<T>()(elts[0]) + norm1<T>()(elts[1]) +
-                       norm1<T>()(elts[2]) + norm1<T>()(elts[3]) +
-                       norm1<T>()(elts[4]) + norm1<T>()(elts[5]);
-    const auto is_approx{[scale](const T &fgood, const T &fother) {
-      return norm1<T>()(fother - fgood) <= 1.0e-12 * (1 + scale);
-    }};
-    if (!(is_approx((*this)(0, 1), f10) && is_approx((*this)(0, 2), f20) &&
-          is_approx((*this)(1, 2), f21))) {
-      ostringstream buf;
-      buf << "f(0,1)=" << (*this)(0, 1) << "\n"
-          << "f(1,0)=" << f10 << "\n"
-          << "f(0,2)=" << (*this)(0, 2) << "\n"
-          << "f(2,0)=" << f20 << "\n"
-          << "f(1,2)=" << (*this)(1, 2) << "\n"
-          << "f(2,1)=" << f21 << "\n";
-      CCTK_VERROR("symmetric matrix is not symmetric:\n%s", buf.str().c_str());
-    }
-    assert(is_approx(f10, (*this)(0, 1)));
-    assert(is_approx(f20, (*this)(0, 2)));
-    assert(is_approx(f21, (*this)(1, 2)));
-#endif
+    // #ifdef CCTK_DEBUG
+    //     // Check symmetry
+    //     const T f10 = f(1, 0);
+    //     const T f20 = f(2, 0);
+    //     const T f21 = f(1, 2);
+    //     const auto scale = norm1<T>()(elts[0]) + norm1<T>()(elts[1]) +
+    //                        norm1<T>()(elts[2]) + norm1<T>()(elts[3]) +
+    //                        norm1<T>()(elts[4]) + norm1<T>()(elts[5]);
+    //     const auto is_approx{[scale](const T &fgood, const T &fother) {
+    //       return norm1<T>()(fother - fgood) <= 1.0e-12 * (1 + scale);
+    //     }};
+    //     if (!(is_approx((*this)(0, 1), f10) && is_approx((*this)(0, 2), f20)
+    //     &&
+    //           is_approx((*this)(1, 2), f21))) {
+    //       ostringstream buf;
+    //       buf << "f(0,1)=" << (*this)(0, 1) << "\n"
+    //           << "f(1,0)=" << f10 << "\n"
+    //           << "f(0,2)=" << (*this)(0, 2) << "\n"
+    //           << "f(2,0)=" << f20 << "\n"
+    //           << "f(1,2)=" << (*this)(1, 2) << "\n"
+    //           << "f(2,1)=" << f21 << "\n";
+    //       CCTK_VERROR("symmetric matrix is not symmetric:\n%s",
+    //       buf.str().c_str());
+    //     }
+    //     assert(is_approx(f10, (*this)(0, 1)));
+    //     assert(is_approx(f20, (*this)(0, 2)));
+    //     assert(is_approx(f21, (*this)(1, 2)));
+    // #endif
   }
 
-  mat3(const cGH *const cctkGH, allocate)
-      : mat3(T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate())) {}
-
-  void store(const GF3D<T, 0, 0, 0> &gf_Axx_, const GF3D<T, 0, 0, 0> &gf_Axy_,
-             const GF3D<T, 0, 0, 0> &gf_Axz_, const GF3D<T, 0, 0, 0> &gf_Ayy_,
-             const GF3D<T, 0, 0, 0> &gf_Ayz_, const GF3D<T, 0, 0, 0> &gf_Azz_,
+  void store(const GF3D2<T> &gf_Axx_, const GF3D2<T> &gf_Axy_,
+             const GF3D2<T> &gf_Axz_, const GF3D2<T> &gf_Ayy_,
+             const GF3D2<T> &gf_Ayz_, const GF3D2<T> &gf_Azz_,
              const vect<int, 3> &I) const {
     const auto &A = *this;
 #ifdef CCTK_DEBUG
@@ -388,12 +429,20 @@ public:
   T &operator()(int i, int j) { return elts[ind(i, j)]; }
 
   template <typename U = T>
-
   mat3<remove_cv_t<remove_reference_t<result_of_t<U(vect<int, 3>)> > >, dnup1,
        dnup2>
   operator()(const vect<int, 3> &I) const {
     return {elts[0](I), elts[1](I), elts[2](I),
             elts[3](I), elts[4](I), elts[5](I)};
+  }
+  // TODO: Only if T is GF3D5<U>
+  template <typename U = T>
+  mat3<remove_cv_t<
+           remove_reference_t<result_of_t<U(GF3D5layout, vect<int, 3>)> > >,
+       dnup1, dnup2>
+  operator()(const GF3D5layout &layout, const vect<int, 3> &I) const {
+    return {elts[0](layout, I), elts[1](layout, I), elts[2](layout, I),
+            elts[3](layout, I), elts[4](layout, I), elts[5](layout, I)};
   }
 
   friend constexpr mat3<T, dnup1, dnup2>
@@ -551,46 +600,30 @@ public:
   constexpr vec4(const vect<T, 4> &elts) : elts(elts) {}
   constexpr vec4(vect<T, 4> &&elts) : elts(move(elts)) {}
 
-private:
-  static constexpr vector<T> make_vector(T vt, T vx, T vy, T vz) {
-    vector<T> vec;
-    vec.reserve(4);
-    vec.push_back(move(vt));
-    vec.push_back(move(vx));
-    vec.push_back(move(vy));
-    vec.push_back(move(vz));
-    return vec;
-  }
-
-public:
   explicit constexpr vec4(T vt, T vx, T vy, T vz)
-      : elts(make_vector(move(vt), move(vx), move(vy), move(vz))) {}
+      : elts(make_tuple(move(vt), move(vx), move(vy), move(vz))) {}
 
   constexpr vec4(initializer_list<T> v) : elts(v) {}
-  constexpr vec4(const vector<T> &v) : elts(v) {}
-  constexpr vec4(vector<T> &&v) : elts(move(v)) {}
+  // constexpr vec4(const vector<T> &v) : elts(v) {}
+  // constexpr vec4(vector<T> &&v) : elts(move(v)) {}
 
-  vec4(const GF3D<add_const_t<T>, 0, 0, 0> &gf_vt_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_vx_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_vy_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_vz_, const vect<int, 3> &I)
+  vec4(const GF3D2<add_const_t<T> > &gf_vt_,
+       const GF3D2<add_const_t<T> > &gf_vx_,
+       const GF3D2<add_const_t<T> > &gf_vy_,
+       const GF3D2<add_const_t<T> > &gf_vz_, const vect<int, 3> &I)
       : vec4{gf_vt_(I), gf_vx_(I), gf_vy_(I), gf_vz_(I)} {}
 
-  vec4(const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vt_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vx_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vy_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_vz_, const vect<int, 3> &I)
+  vec4(const GF3D2<remove_const_t<T> > &gf_vt_,
+       const GF3D2<remove_const_t<T> > &gf_vx_,
+       const GF3D2<remove_const_t<T> > &gf_vy_,
+       const GF3D2<remove_const_t<T> > &gf_vz_, const vect<int, 3> &I)
       : vec4{gf_vt_(I), gf_vx_(I), gf_vy_(I), gf_vz_(I)} {}
 
   template <typename F, typename = result_of_t<F(int)> >
   constexpr vec4(const F &f) : elts{f(0), f(1), f(2), f(3)} {}
 
-  vec4(const cGH *const cctkGH, allocate)
-      : vec4(T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate())) {}
-
-  void store(const GF3D<T, 0, 0, 0> &gf_vt_, const GF3D<T, 0, 0, 0> &gf_vx_,
-             const GF3D<T, 0, 0, 0> &gf_vy_, const GF3D<T, 0, 0, 0> &gf_vz_,
+  void store(const GF3D2<T> &gf_vt_, const GF3D2<T> &gf_vx_,
+             const GF3D2<T> &gf_vy_, const GF3D2<T> &gf_vz_,
              const vect<int, 3> &I) const {
     const auto &v = *this;
 #ifdef CCTK_DEBUG
@@ -615,10 +648,18 @@ public:
   T &operator()(int i) { return elts[ind(i)]; }
 
   template <typename U = T>
-
   vec4<remove_cv_t<remove_reference_t<result_of_t<U(vect<int, 3>)> > >, dnup>
   operator()(const vect<int, 3> &I) const {
     return {elts[0](I), elts[1](I), elts[2](I), elts[3](I)};
+  }
+  // TODO: Only if T is GF3D5<U>
+  template <typename U = T>
+  vec4<remove_cv_t<
+           remove_reference_t<result_of_t<U(GF3D5layout, vect<int, 4>)> > >,
+       dnup>
+  operator()(const GF3D5layout &layout, const vect<int, 4> &I) const {
+    return {elts[0](layout, I), elts[1](layout, I), elts[2](layout, I),
+            elts[3](layout, I)};
   }
 
   friend constexpr vec4<T, dnup> operator+(const vec4<T, dnup> &x) {
@@ -738,12 +779,15 @@ template <typename T, dnup_t dnup1, dnup_t dnup2> class mat4 {
   static_assert(symind(2, 3) == 8, "");
   static_assert(symind(3, 3) == 9, "");
 
+  // nvcc doesn't handle these constexpr expressions
+#ifndef __CUDACC__
   static_assert(ind(1, 0) == ind(0, 1), "");
   static_assert(ind(2, 0) == ind(0, 2), "");
   static_assert(ind(3, 0) == ind(0, 3), "");
   static_assert(ind(2, 1) == ind(1, 2), "");
   static_assert(ind(3, 1) == ind(1, 3), "");
   static_assert(ind(3, 2) == ind(2, 3), "");
+#endif
 
 public:
   explicit constexpr mat4() : elts{nan<vect<T, 10> >()()} {}
@@ -751,58 +795,39 @@ public:
   constexpr mat4(const vect<T, 10> &elts) : elts(elts) {}
   constexpr mat4(vect<T, 10> &&elts) : elts(move(elts)) {}
 
-private:
-  static constexpr vector<T> make_vector(T Att, T Atx, T Aty, T Atz, T Axx,
-                                         T Axy, T Axz, T Ayy, T Ayz, T Azz) {
-    vector<T> vec;
-    vec.reserve(10);
-    vec.push_back(move(Att));
-    vec.push_back(move(Atx));
-    vec.push_back(move(Aty));
-    vec.push_back(move(Atz));
-    vec.push_back(move(Axx));
-    vec.push_back(move(Axy));
-    vec.push_back(move(Axz));
-    vec.push_back(move(Ayy));
-    vec.push_back(move(Ayz));
-    vec.push_back(move(Azz));
-    return vec;
-  }
-
-public:
   explicit constexpr mat4(T Att, T Atx, T Aty, T Atz, T Axx, T Axy, T Axz,
                           T Ayy, T Ayz, T Azz)
-      : elts(make_vector(move(Att), move(Atx), move(Aty), move(Atz), move(Axx),
-                         move(Axy), move(Axz), move(Ayy), move(Ayz),
-                         move(Azz))) {}
+      : elts(make_tuple(move(Att), move(Atx), move(Aty), move(Atz), move(Axx),
+                        move(Axy), move(Axz), move(Ayy), move(Ayz),
+                        move(Azz))) {}
 
   constexpr mat4(initializer_list<T> A) : elts(A) {}
-  constexpr mat4(const vector<T> &A) : elts(A) {}
-  constexpr mat4(vector<T> &&A) : elts(move(A)) {}
+  // constexpr mat4(const vector<T> &A) : elts(A) {}
+  // constexpr mat4(vector<T> &&A) : elts(move(A)) {}
 
-  mat4(const GF3D<add_const_t<T>, 0, 0, 0> &gf_Att_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Atx_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Aty_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Atz_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axx_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axy_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axz_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Ayy_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Ayz_,
-       const GF3D<add_const_t<T>, 0, 0, 0> &gf_Azz_, const vect<int, 3> &I)
+  mat4(const GF3D2<add_const_t<T> > &gf_Att_,
+       const GF3D2<add_const_t<T> > &gf_Atx_,
+       const GF3D2<add_const_t<T> > &gf_Aty_,
+       const GF3D2<add_const_t<T> > &gf_Atz_,
+       const GF3D2<add_const_t<T> > &gf_Axx_,
+       const GF3D2<add_const_t<T> > &gf_Axy_,
+       const GF3D2<add_const_t<T> > &gf_Axz_,
+       const GF3D2<add_const_t<T> > &gf_Ayy_,
+       const GF3D2<add_const_t<T> > &gf_Ayz_,
+       const GF3D2<add_const_t<T> > &gf_Azz_, const vect<int, 3> &I)
       : mat4{gf_Att_(I), gf_Atx_(I), gf_Aty_(I), gf_Atz_(I), gf_Axx_(I),
              gf_Axy_(I), gf_Axz_(I), gf_Ayy_(I), gf_Ayz_(I), gf_Azz_(I)} {}
 
-  mat4(const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Att_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Atx_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Aty_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Atz_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axx_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axy_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axz_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Ayy_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Ayz_,
-       const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Azz_, const vect<int, 3> &I)
+  mat4(const GF3D2<remove_const_t<T> > &gf_Att_,
+       const GF3D2<remove_const_t<T> > &gf_Atx_,
+       const GF3D2<remove_const_t<T> > &gf_Aty_,
+       const GF3D2<remove_const_t<T> > &gf_Atz_,
+       const GF3D2<remove_const_t<T> > &gf_Axx_,
+       const GF3D2<remove_const_t<T> > &gf_Axy_,
+       const GF3D2<remove_const_t<T> > &gf_Axz_,
+       const GF3D2<remove_const_t<T> > &gf_Ayy_,
+       const GF3D2<remove_const_t<T> > &gf_Ayz_,
+       const GF3D2<remove_const_t<T> > &gf_Azz_, const vect<int, 3> &I)
       : mat4{gf_Att_(I), gf_Atx_(I), gf_Aty_(I), gf_Atz_(I), gf_Axx_(I),
              gf_Axy_(I), gf_Axz_(I), gf_Ayy_(I), gf_Ayz_(I), gf_Azz_(I)} {}
 
@@ -853,18 +878,11 @@ public:
 #endif
   }
 
-  mat4(const cGH *const cctkGH, allocate)
-      : mat4(T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate()),
-             T(cctkGH, allocate()), T(cctkGH, allocate())) {}
-
-  void store(const GF3D<T, 0, 0, 0> &gf_Att_, const GF3D<T, 0, 0, 0> &gf_Atx_,
-             const GF3D<T, 0, 0, 0> &gf_Aty_, const GF3D<T, 0, 0, 0> &gf_Atz_,
-             const GF3D<T, 0, 0, 0> &gf_Axx_, const GF3D<T, 0, 0, 0> &gf_Axy_,
-             const GF3D<T, 0, 0, 0> &gf_Axz_, const GF3D<T, 0, 0, 0> &gf_Ayy_,
-             const GF3D<T, 0, 0, 0> &gf_Ayz_, const GF3D<T, 0, 0, 0> &gf_Azz_,
+  void store(const GF3D2<T> &gf_Att_, const GF3D2<T> &gf_Atx_,
+             const GF3D2<T> &gf_Aty_, const GF3D2<T> &gf_Atz_,
+             const GF3D2<T> &gf_Axx_, const GF3D2<T> &gf_Axy_,
+             const GF3D2<T> &gf_Axz_, const GF3D2<T> &gf_Ayy_,
+             const GF3D2<T> &gf_Ayz_, const GF3D2<T> &gf_Azz_,
              const vect<int, 3> &I) const {
     const auto &A = *this;
 #ifdef CCTK_DEBUG
@@ -897,12 +915,22 @@ public:
   T &operator()(int i, int j) { return elts[ind(i, j)]; }
 
   template <typename U = T>
-
   mat4<remove_cv_t<remove_reference_t<result_of_t<U(vect<int, 10>)> > >, dnup1,
        dnup2>
   operator()(const vect<int, 3> &I) const {
     return {elts[0](I), elts[1](I), elts[2](I), elts[4](I), elts[4](I),
             elts[5](I), elts[6](I), elts[7](I), elts[8](I), elts[9](I)};
+  }
+  // TODO: Only if T is GF3D5<U>
+  template <typename U = T>
+  mat4<remove_cv_t<
+           remove_reference_t<result_of_t<U(GF3D5layout, vect<int, 3>)> > >,
+       dnup1, dnup2>
+  operator()(const GF3D5layout &layout, const vect<int, 3> &I) const {
+    return {elts[0](layout, I), elts[1](layout, I), elts[2](layout, I),
+            elts[4](layout, I), elts[4](layout, I), elts[5](layout, I),
+            elts[6](layout, I), elts[7](layout, I), elts[8](layout, I),
+            elts[9](layout, I)};
   }
 
   friend constexpr mat4<T, dnup1, dnup2>
@@ -1128,12 +1156,15 @@ template <typename T, dnup_t dnup1, dnup_t dnup2> class amat4 {
   static_assert(asymind(1, 3) == 4, "");
   static_assert(asymind(2, 3) == 5, "");
 
+  // nvcc doesn't handle these constexpr expressions
+#ifndef __CUDACC__
   static_assert(ind(1, 0) == ind(0, 1), "");
   static_assert(ind(2, 0) == ind(0, 2), "");
   static_assert(ind(3, 0) == ind(0, 3), "");
   static_assert(ind(2, 1) == ind(1, 2), "");
   static_assert(ind(3, 1) == ind(1, 3), "");
   static_assert(ind(3, 2) == ind(2, 3), "");
+#endif
 
   static_assert(sign(1, 0) == -sign(0, 1), "");
   static_assert(sign(2, 0) == -sign(0, 2), "");
@@ -1152,44 +1183,29 @@ public:
   constexpr amat4(const vect<T, 6> &elts) : elts(elts) {}
   constexpr amat4(vect<T, 6> &&elts) : elts(move(elts)) {}
 
-private:
-  static constexpr vector<T> make_vector(T Atx, T Aty, T Atz, T Axy, T Axz,
-                                         T Ayz) {
-    vector<T> vec;
-    vec.reserve(6);
-    vec.push_back(move(Atx));
-    vec.push_back(move(Aty));
-    vec.push_back(move(Atz));
-    vec.push_back(move(Axy));
-    vec.push_back(move(Axz));
-    vec.push_back(move(Ayz));
-    return vec;
-  }
-
-public:
   explicit constexpr amat4(T Atx, T Aty, T Atz, T Axy, T Axz, T Ayz)
-      : elts(make_vector(move(Atx), move(Aty), move(Atz), move(Axy), move(Axz),
-                         move(Ayz))) {}
+      : elts(make_tuple(move(Atx), move(Aty), move(Atz), move(Axy), move(Axz),
+                        move(Ayz))) {}
 
   constexpr amat4(initializer_list<T> A) : elts(A) {}
-  constexpr amat4(const vector<T> &A) : elts(A) {}
-  constexpr amat4(vector<T> &&A) : elts(move(A)) {}
+  // constexpr amat4(const vector<T> &A) : elts(A) {}
+  // constexpr amat4(vector<T> &&A) : elts(move(A)) {}
 
-  amat4(const GF3D<add_const_t<T>, 0, 0, 0> &gf_Atx_,
-        const GF3D<add_const_t<T>, 0, 0, 0> &gf_Aty_,
-        const GF3D<add_const_t<T>, 0, 0, 0> &gf_Atz_,
-        const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axy_,
-        const GF3D<add_const_t<T>, 0, 0, 0> &gf_Axz_,
-        const GF3D<add_const_t<T>, 0, 0, 0> &gf_Ayz_, const vect<int, 3> &I)
+  amat4(const GF3D2<add_const_t<T> > &gf_Atx_,
+        const GF3D2<add_const_t<T> > &gf_Aty_,
+        const GF3D2<add_const_t<T> > &gf_Atz_,
+        const GF3D2<add_const_t<T> > &gf_Axy_,
+        const GF3D2<add_const_t<T> > &gf_Axz_,
+        const GF3D2<add_const_t<T> > &gf_Ayz_, const vect<int, 3> &I)
       : amat4{gf_Atx_(I), gf_Aty_(I), gf_Atz_(I),
               gf_Axy_(I), gf_Axz_(I), gf_Ayz_(I)} {}
 
-  amat4(const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Atx_,
-        const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Aty_,
-        const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Atz_,
-        const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axy_,
-        const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Axz_,
-        const GF3D<remove_const_t<T>, 0, 0, 0> &gf_Ayz_, const vect<int, 3> &I)
+  amat4(const GF3D2<remove_const_t<T> > &gf_Atx_,
+        const GF3D2<remove_const_t<T> > &gf_Aty_,
+        const GF3D2<remove_const_t<T> > &gf_Atz_,
+        const GF3D2<remove_const_t<T> > &gf_Axy_,
+        const GF3D2<remove_const_t<T> > &gf_Axz_,
+        const GF3D2<remove_const_t<T> > &gf_Ayz_, const vect<int, 3> &I)
       : amat4{gf_Atx_(I), gf_Aty_(I), gf_Atz_(I),
               gf_Axy_(I), gf_Axz_(I), gf_Ayz_(I)} {}
 
@@ -1252,14 +1268,9 @@ public:
 #endif
   }
 
-  amat4(const cGH *const cctkGH, allocate)
-      : amat4(T(cctkGH, allocate()), T(cctkGH, allocate()),
-              T(cctkGH, allocate()), T(cctkGH, allocate()),
-              T(cctkGH, allocate()), T(cctkGH, allocate())) {}
-
-  void store(const GF3D<T, 0, 0, 0> &gf_Atx_, const GF3D<T, 0, 0, 0> &gf_Aty_,
-             const GF3D<T, 0, 0, 0> &gf_Atz_, const GF3D<T, 0, 0, 0> &gf_Axy_,
-             const GF3D<T, 0, 0, 0> &gf_Axz_, const GF3D<T, 0, 0, 0> &gf_Ayz_,
+  void store(const GF3D2<T> &gf_Atx_, const GF3D2<T> &gf_Aty_,
+             const GF3D2<T> &gf_Atz_, const GF3D2<T> &gf_Axy_,
+             const GF3D2<T> &gf_Axz_, const GF3D2<T> &gf_Ayz_,
              const vect<int, 3> &I) const {
     const auto &A = *this;
 #ifdef CCTK_DEBUG
@@ -1293,12 +1304,20 @@ public:
   }
 
   template <typename U = T>
-
   amat4<remove_cv_t<remove_reference_t<result_of_t<U(vect<int, 6>)> > >, dnup1,
         dnup2>
   operator()(const vect<int, 3> &I) const {
     return {elts[0](I), elts[1](I), elts[2](I),
             elts[3](I), elts[4](I), elts[5](I)};
+  }
+  // TODO: Only if T is GF3D5<U>
+  template <typename U = T>
+  amat4<remove_cv_t<
+            remove_reference_t<result_of_t<U(GF3D5layout, vect<int, 3>)> > >,
+        dnup1, dnup2>
+  operator()(const GF3D5layout &layout, const vect<int, 3> &I) const {
+    return {elts[0](layout, I), elts[1](layout, I), elts[2](layout, I),
+            elts[4](layout, I), elts[4](layout, I), elts[5](layout, I)};
   }
 
   friend constexpr amat4<T, dnup1, dnup2>
@@ -1421,70 +1440,6 @@ constexpr amat4<T, dnup1, dnup2> mul(const amat4<T, dnup1, dnup4> &A,
   return amat4<T, dnup1, dnup2>([&](int a, int b) {
     return sum1([&](int x) { return A(a, x) * B(x, b); });
   });
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename F,
-          typename R = remove_cv_t<remove_reference_t<result_of_t<F(int)> > > >
-constexpr R sum41(const F &f) {
-  R s = zero<R>()();
-  for (int x = 0; x < 4; ++x)
-    s += f(x);
-  return s;
-}
-
-template <typename F, typename R = remove_cv_t<
-                          remove_reference_t<result_of_t<F(int, int)> > > >
-constexpr R sum42(const F &f) {
-  R s = zero<R>()();
-  for (int x = 0; x < 4; ++x)
-    for (int y = 0; y < 4; ++y)
-      s += f(x, y);
-  return s;
-}
-
-template <typename F, typename R = remove_cv_t<
-                          remove_reference_t<result_of_t<F(int, int, int)> > > >
-constexpr R sum43(const F &f) {
-  R s = zero<R>()();
-  for (int x = 0; x < 4; ++x)
-    for (int y = 0; y < 4; ++y)
-      for (int z = 0; z < 4; ++z)
-        s += f(x, y, z);
-  return s;
-}
-
-template <typename F, typename R = remove_cv_t<remove_reference_t<
-                          result_of_t<F(int, int, int, int)> > > >
-constexpr R sum44(const F &f) {
-  R s = zero<R>()();
-  for (int x = 0; x < 4; ++x)
-    for (int y = 0; y < 4; ++y)
-      for (int z = 0; z < 4; ++z)
-        for (int w = 0; w < 4; ++w)
-          s += f(x, y, z, w);
-  return s;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename F, typename T> constexpr T fold(const F &f, const T &x) {
-  return x;
-}
-template <typename F, typename T, typename... Ts>
-constexpr T fold(const F &f, const T &x0, const T &x1, const Ts &... xs) {
-  return fold(f, fold(f, x0, x1), xs...);
-}
-
-template <typename T> constexpr T add() { return T(0); }
-// template <typename T>
-//  constexpr  T add(const T &x) {
-//   return x;
-// }
-template <typename T, typename... Ts>
-constexpr T add(const T &x, const Ts &... xs) {
-  return x + add(xs...);
 }
 
 } // namespace Weyl
