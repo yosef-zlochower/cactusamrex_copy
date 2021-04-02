@@ -335,20 +335,7 @@ void LoopOverInterior(cGH const * restrict const cctkGH, Kranc_Calculation const
 void AssertGroupStorage(cGH const * restrict const cctkGH, const char *calc,
                                   int ngroups, const char *const group_names[])
 {
-  for (int i = 0; i < ngroups; i++)
-  {
-    int result = CCTK_QueryGroupStorage(cctkGH, group_names[i]);
-    if (result == 0)
-    {
-      CCTK_VWarn(CCTK_WARN_ABORT, __LINE__, __FILE__, CCTK_THORNSTRING,
-                 "Error in %s: Group \"%s\" does not have storage", calc, group_names[i]);
-    }
-    else if (result < 0)
-    {
-      CCTK_VWarn(CCTK_WARN_ABORT, __LINE__, __FILE__, CCTK_THORNSTRING,
-                 "Error in %s: Invalid group name \"%s\"", calc, group_names[i]);
-    }
-  }
+  return;
 }
 
 /*********************************************************************
