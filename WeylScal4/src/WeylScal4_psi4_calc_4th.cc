@@ -148,9 +148,9 @@ static void WeylScal4_psi4_calc_4th_Body(const cGH* restrict const cctkGH, const
     CCTK_REAL kyyL CCTK_ATTRIBUTE_UNUSED = kyy[index];
     CCTK_REAL kyzL CCTK_ATTRIBUTE_UNUSED = kyz[index];
     CCTK_REAL kzzL CCTK_ATTRIBUTE_UNUSED = kzz[index];
-    CCTK_REAL xL CCTK_ATTRIBUTE_UNUSED = x[index];
-    CCTK_REAL yL CCTK_ATTRIBUTE_UNUSED = y[index];
-    CCTK_REAL zL CCTK_ATTRIBUTE_UNUSED = z[index];
+    CCTK_REAL xL CCTK_ATTRIBUTE_UNUSED = vcoordx[index];
+    CCTK_REAL yL CCTK_ATTRIBUTE_UNUSED = vcoordy[index];
+    CCTK_REAL zL CCTK_ATTRIBUTE_UNUSED = vcoordz[index];
     
     /* Include user supplied include files */
     /* Precompute derivatives */

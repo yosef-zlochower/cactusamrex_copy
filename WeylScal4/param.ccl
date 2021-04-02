@@ -6,11 +6,6 @@ shares: GenericFD
 USES CCTK_INT assume_stress_energy_state
 
 
-shares: MethodOfLines
-
-USES CCTK_INT MoL_Num_Evolved_Vars
-USES CCTK_INT MoL_Num_ArrayEvolved_Vars
-
 restricted:
 CCTK_INT verbose "verbose" STEERABLE=ALWAYS
 {
@@ -83,18 +78,6 @@ CCTK_KEYWORD calc_invariants "Compute invariants"
   "always" :: ""
   "never" :: ""
 } "never"
-
-restricted:
-CCTK_INT WeylScal4_MaxNumEvolvedVars "Number of evolved variables used by this thorn" ACCUMULATOR-BASE=MethodofLines::MoL_Num_Evolved_Vars STEERABLE=RECOVER
-{
-  0:0 :: "Number of evolved variables used by this thorn"
-} 0
-
-restricted:
-CCTK_INT WeylScal4_MaxNumArrayEvolvedVars "Number of Array evolved variables used by this thorn" ACCUMULATOR-BASE=MethodofLines::MoL_Num_ArrayEvolved_Vars STEERABLE=RECOVER
-{
-  0:0 :: "Number of Array evolved variables used by this thorn"
-} 0
 
 restricted:
 CCTK_INT timelevels "Number of active timelevels" STEERABLE=RECOVER

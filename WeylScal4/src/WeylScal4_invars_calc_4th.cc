@@ -108,7 +108,7 @@ static void WeylScal4_invars_calc_4th_Body(const cGH* restrict const cctkGH, con
   const int imax0=imax[0];
   const int imax1=imax[1];
   const int imax2=imax[2];
-  #pragma omp parallel
+  //#pragma omp parallel
   CCTK_LOOP3(WeylScal4_invars_calc_4th,
     i,j,k, imin0,imin1,imin2, imax0,imax1,imax2,
     cctk_ash[0],cctk_ash[1],cctk_ash[2])

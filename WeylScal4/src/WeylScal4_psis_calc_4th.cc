@@ -152,7 +152,7 @@ static void WeylScal4_psis_calc_4th_Body(const cGH* restrict const cctkGH, const
   const int imax0=imax[0];
   const int imax1=imax[1];
   const int imax2=imax[2];
-  #pragma omp parallel
+  //#pragma omp parallel
   CCTK_LOOP3(WeylScal4_psis_calc_4th,
     i,j,k, imin0,imin1,imin2, imax0,imax1,imax2,
     cctk_ash[0],cctk_ash[1],cctk_ash[2])
@@ -172,9 +172,9 @@ static void WeylScal4_psis_calc_4th_Body(const cGH* restrict const cctkGH, const
     CCTK_REAL kyyL CCTK_ATTRIBUTE_UNUSED = kyy[index];
     CCTK_REAL kyzL CCTK_ATTRIBUTE_UNUSED = kyz[index];
     CCTK_REAL kzzL CCTK_ATTRIBUTE_UNUSED = kzz[index];
-    CCTK_REAL xL CCTK_ATTRIBUTE_UNUSED = x[index];
-    CCTK_REAL yL CCTK_ATTRIBUTE_UNUSED = y[index];
-    CCTK_REAL zL CCTK_ATTRIBUTE_UNUSED = z[index];
+    CCTK_REAL xL CCTK_ATTRIBUTE_UNUSED = vcoordx[index];
+    CCTK_REAL yL CCTK_ATTRIBUTE_UNUSED = vcoordy[index];
+    CCTK_REAL zL CCTK_ATTRIBUTE_UNUSED = vcoordz[index];
     
     /* Include user supplied include files */
     /* Precompute derivatives */

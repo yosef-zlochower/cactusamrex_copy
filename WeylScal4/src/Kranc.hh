@@ -55,14 +55,7 @@ static CCTK_INT KrancBdy_SelectVarForBC(
     const CCTK_STRING var_name,
     const CCTK_STRING bc_name) {
 
-    static bool is_aliased = CCTK_IsFunctionAliased("Driver_SelectGroupForBC");
-
     int ierr = 0;
-
-    ierr = Boundary_SelectVarForBC(cctkGH_,faces,width,table_handle,var_name,bc_name);
-
-    if(ierr == 0 && is_aliased)
-        ierr = Driver_SelectVarForBC(cctkGH_,faces,width,table_handle,var_name,bc_name);
 
     return ierr;
 }
@@ -76,14 +69,7 @@ static CCTK_INT KrancBdy_SelectGroupForBC(
     const CCTK_STRING group_name,
     const CCTK_STRING bc_name) {
 
-    static bool is_aliased = CCTK_IsFunctionAliased("Driver_SelectGroupForBC");
-
-    int ierr;
-
-    ierr = Boundary_SelectGroupForBC(cctkGH_,faces,width,table_handle,group_name,bc_name);
-
-    if(ierr == 0 && is_aliased)
-        ierr = Driver_SelectGroupForBC(cctkGH_,faces,width,table_handle,group_name,bc_name);
+    int ierr = 0; 
 
     return ierr;
 }

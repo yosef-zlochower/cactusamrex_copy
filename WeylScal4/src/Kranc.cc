@@ -28,8 +28,6 @@
 #include <cctk_Parameters.h>
 #include <util_Table.h>
 
-#include <Symmetry.h>
-            
 #include "Kranc.hh"
 
 namespace WeylScal4 {
@@ -40,37 +38,8 @@ namespace WeylScal4 {
 
 void GetBoundaryWidths(cGH const * restrict const cctkGH, CCTK_INT nboundaryzones[6])
 {
-  CCTK_INT is_internal[6];
-  CCTK_INT is_staggered[6];
-  CCTK_INT shiftout[6];
-  int ierr = -1;
-
-  if (CCTK_IsFunctionAliased ("MultiPatch_GetBoundarySpecification")) {
-    int const map = MultiPatch_GetMap (cctkGH);
-    /* This doesn't make sense in level mode */
-    if (map < 0)
-    {
-      static int have_warned = 0;
-      if (!have_warned)
-      {
-        CCTK_WARN(1, "GetBoundaryWidths: Could not determine current map (can be caused by calling in LEVEL mode)");
-        have_warned = 1;
-      }
-      for (int i = 0; i < 6; i++)
-        nboundaryzones[i] = 0;
-      return;
-    }
-    ierr = MultiPatch_GetBoundarySpecification
-      (map, 6, nboundaryzones, is_internal, is_staggered, shiftout);
-    if (ierr != 0)
-      CCTK_WARN(0, "Could not obtain boundary specification");
-  } else if (CCTK_IsFunctionAliased ("GetBoundarySpecification")) {
-    ierr = GetBoundarySpecification
-      (6, nboundaryzones, is_internal, is_staggered, shiftout);
-    if (ierr != 0)
-      CCTK_WARN(0, "Could not obtain boundary specification");
-  } else {
-    CCTK_WARN(0, "Could not obtain boundary specification");
+  for(int i = 0 ; i < 6 ; i ++) {
+    nboundaryzones[i] = cctkGH->cctk_nghostzones[0];
   }
 }
 
@@ -80,16 +49,7 @@ void GetBoundaryWidths(cGH const * restrict const cctkGH, CCTK_INT nboundaryzone
 
 int GetBoundaryWidth(cGH const * restrict const cctkGH)
 {
-  CCTK_INT nboundaryzones[6];
-  GetBoundaryWidths(cctkGH, nboundaryzones);
-
-  int bw = nboundaryzones[0];
-
-  for (int i = 1; i < 6; i++)
-    if (nboundaryzones[i] != bw)
-    CCTK_WARN(0, "Number of boundary points is different on different faces");
-
-  return bw;
+  return cctkGH->cctk_nghostzones[0];
 }
 
 /*********************************************************************
@@ -118,102 +78,15 @@ void GetBoundaryInfo(cGH const * restrict const cctkGH,
 			       int * restrict const is_physbnd,
                                int * restrict const is_ipbnd)
 {
-  CCTK_INT bbox[6];
-  CCTK_INT nboundaryzones[6];
-  CCTK_INT is_internal[6];
-  CCTK_INT is_staggered[6];
-  CCTK_INT shiftout[6];
-  CCTK_INT symbnd[6];
-
-  int symtable = 0;
-  int dir = 0;
-  int face = 0;
-  int npoints = 0;
-  int iret = 0;
-  int ierr = 0;
-
-  if (CCTK_IsFunctionAliased ("MultiPatch_GetBbox")) {
-    ierr = MultiPatch_GetBbox (cctkGH, 6, bbox);
-    if (ierr != 0)
-      CCTK_WARN(0, "Could not obtain bbox specification");
-  } else {
-    for (dir = 0; dir < 6; dir++)
-    {
-      bbox[dir] = 0;
-    }
-  }
-
-  if (CCTK_IsFunctionAliased ("MultiPatch_GetBoundarySpecification")) {
-    int const map = MultiPatch_GetMap (cctkGH);
-    if (map < 0)
-      CCTK_WARN(0, "Could not obtain boundary specification");
-    ierr = MultiPatch_GetBoundarySpecification
-      (map, 6, nboundaryzones, is_internal, is_staggered, shiftout);
-    if (ierr != 0)
-      CCTK_WARN(0, "Could not obtain boundary specification");
-  } else if (CCTK_IsFunctionAliased ("GetBoundarySpecification")) {
-    ierr = GetBoundarySpecification
-      (6, nboundaryzones, is_internal, is_staggered, shiftout);
-    if (ierr != 0)
-      CCTK_WARN(0, "Could not obtain boundary specification");
-  } else {
-    CCTK_WARN(0, "Could not obtain boundary specification");
-  }
-
-  symtable = SymmetryTableHandleForGrid(cctkGH);
-  if (symtable < 0) 
-  {
-    CCTK_WARN(0, "Could not obtain symmetry table");
-  }  
-  
-  iret = Util_TableGetIntArray(symtable, 6, symbnd, "symmetry_handle");
-  if (iret != 6) CCTK_WARN (0, "Could not obtain symmetry information");
-
-  for (dir = 0; dir < 6; dir++)
-  {
-    is_ipbnd[dir] = (!cctk_bbox[dir]);
-    is_symbnd[dir] = (!is_ipbnd[dir] && symbnd[dir] >= 0 && !bbox[dir]);
-    is_physbnd[dir] = (!is_ipbnd[dir] && !is_symbnd[dir]);
-  }
-
-  for (dir = 0; dir < 3; dir++)
-  {
-    for (face = 0; face < 2; face++)
-    {
-      int index = dir*2 + face;
-      if (is_ipbnd[index])
-      {
-	/* Inter-processor boundary */
-	npoints = cctk_nghostzones[dir];
-      }
-      else
-      {
-	/* Symmetry or physical boundary */
-	npoints = nboundaryzones[index];
-             
-	if (is_symbnd[index])
-	{
-	  /* Ensure that the number of symmetry zones is the same
-	     as the number of ghost zones */
-	  if (npoints != cctk_nghostzones[dir])
-	  {
-	    CCTK_WARN (1, "The number of symmetry points is different from the number of ghost points; this is probably an error");
-	  }
-	}
-      }
-
-      switch(face)
-      {
-      case 0: /* Lower boundary */
-	imin[dir] = npoints;
-	break;
-      case 1: /* Upper boundary */
-	imax[dir] = cctk_lsh[dir] - npoints;
-	break;
-      default:
-	CCTK_WARN(0, "internal error");
-      }
-    }
+  for(int i = 0 ; i < 3 ; i++) {
+    imin[i] = cctk_nghostzones[i];
+    imax[i] = cctk_lsh[i] - cctk_nghostzones[i];
+    is_symbnd[2*i+0] = 0;
+    is_symbnd[2*i+1] = 0;
+    is_physbnd[2*i+0] = 0;
+    is_physbnd[2*i+1] = 0;
+    is_ipbnd[2*i+0] = 1;
+    is_ipbnd[2*i+1] = 1;
   }
 }
 
@@ -648,7 +521,7 @@ void TiledLoop(
   const int dti = tile_size_l[0];
   const int dtj = tile_size_l[1];
   const int dtk = tile_size_l[2];
-#pragma omp parallel for collapse(3)
+//#pragma omp parallel for collapse(3)
   for (int tk = tiled_imin[2]; tk < tiled_imax[2]; tk += dtk)
   {
     for (int tj = tiled_imin[1]; tj < tiled_imax[1]; tj += dtj)
