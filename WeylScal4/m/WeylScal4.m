@@ -400,6 +400,6 @@ CreateKrancThornTT[groups, ".", "WeylScal4",
   RealParameters -> realParameters,
   IntParameters -> intParameters,
   InheritedImplementations -> {"admbase", "methodoflines"},
-  UseJacobian -> True,
-  UseLoopControl -> True,
-  UseVectors -> True];
+  UseJacobian -> False,
+  UseLoopControl -> False,
+  UseVectors -> False];

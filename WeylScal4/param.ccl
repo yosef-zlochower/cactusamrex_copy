@@ -4,12 +4,6 @@
 shares: GenericFD
 
 USES CCTK_INT assume_stress_energy_state
-USES CCTK_INT assume_use_jacobian
-USES CCTK_STRING jacobian_group
-USES CCTK_STRING jacobian_determinant_group
-USES CCTK_STRING jacobian_inverse_group
-USES CCTK_STRING jacobian_derivative_group
-USES CCTK_INT jacobian_identity_map
 
 
 shares: MethodOfLines
