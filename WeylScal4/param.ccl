@@ -1,11 +1,6 @@
 # File produced by Kranc
 
 
-shares: GenericFD
-
-USES CCTK_INT assume_stress_energy_state
-
-
 restricted:
 CCTK_INT verbose "verbose" STEERABLE=ALWAYS
 {
