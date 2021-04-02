@@ -79,6 +79,32 @@ GridDescBase_t LC_CreateGridDesc(const cGH *cctkGH);
   }                                                                            \
   while (0)
 
+#undef CCTK_LOOP3
+#undef CCTK_ENDLOOP3
+
+#define CCTK_LOOP3(name, i, j, k, imin0, imin1, imin2, imax0, imax1, imax2,    \
+                   ash0, ash1, ash2)                                           \
+  do {                                                                         \
+    const GridDescBase_t lc_grid = LC_CreateGridDesc(cctkGH);                  \
+    int imin[LC_DIM] = {imin0,imin1,imin2};                                    \
+    int imax[LC_DIM] = {imax0,imax1,imax2};                                    \
+    int inormal[LC_DIM] CCTK_ATTRIBUTE_UNUSED;                                 \
+    const int lc_offset[LC_DIM] = {0, 0, 0};                                   \
+    for (int d = 0; d < LC_DIM; ++d) {                                         \
+      imin[d] = std::max(lc_grid.tmin[d], imin[d]);                            \
+      imax[d] = std::min(lc_grid.tmax[d], imax[d]);                            \
+      if (imax[d] > lc_grid.lsh[d] - lc_offset[d])                             \
+        imax[d] = lc_grid.lsh[d] - lc_offset[d];                               \
+      inormal[d] = 0;                                                          \
+    }                                                                          \
+    LC_LOOP3_BOX(name, i, j, k, lc_grid, imin, imax, inormal) {
+
+#define CCTK_ENDLOOP3(name)                                                    \
+  }                                                                            \
+  LC_ENDLOOP3_BOX(name);                                                       \
+  }                                                                            \
+  while (0)
+
 #ifdef __cplusplus
 }
 #endif
