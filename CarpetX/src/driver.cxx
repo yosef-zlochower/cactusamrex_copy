@@ -1347,6 +1347,7 @@ void *SetupGH(tFleshConfig *fc, int convLevel, cGH *restrict cctkGH) {
   // we get core files.
   pp.add("amrex.throw_exception", 1);
   // Set tile size
+  pp.add("amrex.the_arena_init_size", 1600000);
   pp.addarr("fabarray.mfiter_tile_size",
             vector<int>{max_tile_size_x, max_tile_size_y, max_tile_size_z});
   pamrex = amrex::Initialize(MPI_COMM_WORLD);
