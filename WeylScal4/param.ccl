@@ -38,16 +38,19 @@ CCTK_REAL zorig "zorig"
 } 0
 
 restricted:
+CCTK_INT fdOrder "fdOrder"
+{
+  2 :: ""
+  4 :: ""
+  6 :: ""
+  8 :: ""
+} 2
+
+restricted:
 CCTK_INT tile_size "Loop tile size"
 {
   *:* :: ""
 } -1
-
-private:
-CCTK_KEYWORD fd_order "fd_order"
-{
-  "4th" :: ""
-} "4th"
 
 private:
 CCTK_KEYWORD calc_scalars "Which scalars to calculate"
