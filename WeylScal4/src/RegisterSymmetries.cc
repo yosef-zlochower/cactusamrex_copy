@@ -3,7 +3,6 @@
 #include "cctk.h"
 #include "cctk_Arguments.h"
 #include "cctk_Parameters.h"
-#include "Symmetry.h"
 
 extern "C" void WeylScal4_RegisterSymmetries(CCTK_ARGUMENTS)
 {

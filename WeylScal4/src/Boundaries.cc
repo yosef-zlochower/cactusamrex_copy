@@ -5,7 +5,6 @@
 #include "cctk_Parameters.h"
 #include "cctk_Faces.h"
 #include "util_Table.h"
-#include "Symmetry.h"
 #include "Kranc.hh"
 
 
