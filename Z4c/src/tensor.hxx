@@ -288,7 +288,8 @@ template <typename T, dnup_t dnup1, dnup_t dnup2> class mat3 {
 #ifdef CCTK_DEBUG
     assert(i >= 0 && i <= j && j < 3);
 #endif
-    const int n = 3 * i - i * (i + 1) / 2 + j;
+    const int n = i+j+min(1,i*j);
+//    const int n = 3 * i - i * (i + 1) / 2 + j;
     // i j n
     // 0 0 0
     // 0 1 1
@@ -303,7 +304,15 @@ template <typename T, dnup_t dnup1, dnup_t dnup2> class mat3 {
     return n;
   }
   static constexpr Z4C_INLINE int ind(const int i, const int j) {
-    return symind(min(i, j), max(i, j));
+#ifdef CCTK_DEBUG
+    assert(i >= 0 && j >= 0 && i < 3 && j < 3);
+#endif
+    const int n = i+j+min(1,i*j);
+#ifdef CCTK_DEBUG
+    assert(n >= 0 && n < 6);
+#endif
+    return n;
+//    return symind(min(i, j), max(i, j));
   }
 
   static_assert(symind(0, 0) == 0, "");
