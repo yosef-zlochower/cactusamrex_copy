@@ -1,0 +1,157 @@
+# run.me:
+# run.cores: 40
+# run.memory: 1.0e9
+# run.time: 7200.0
+ActiveThorns = "
+ADMBase
+CarpetX
+Coordinates
+Formaline
+IOUtil
+ODESolvers
+TimerReport
+TmunuBase
+TwoPunctures
+Multipole
+WeylScal4
+ErrorEstimator
+Z4c
+AEILocalInterp
+"
+
+ErrorEstimator::region_shape = "cube"
+ErrorEstimator::scale_by_resolution = yes
+
+#Cactus::cctk_timer_output = "full"
+Cactus::cctk_show_schedule = yes
+
+Multipole::radius[0] = 10.0
+Multipole::variables = "
+WeylScal4::Psi4r{sw=-2 cmplx='Weyl::Psi4i' name='Psi4'}"
+Multipole::l_max = 4
+Multipole::verbose = "yes"
+Multipole::interpolator_pars = "order=3"
+CarpetX::interpolation_order = 3
+
+Cactus::presync_mode = "mixed-error"
+
+Cactus::terminate       = "time"
+Cactus::cctk_final_time = 0.5
+#Cactus::terminate = "iteration"
+#Cactus::cctk_itlast = 50
+
+CarpetX::verbose = no
+CarpetX::poison_undefined_values = no
+#CarpetX::restrict_during_sync = no #not in Eric's par
+
+CarpetX::xmin = -120.0
+CarpetX::ymin = -120.0
+CarpetX::zmin = -120.0
+
+CarpetX::xmax = 120.0
+CarpetX::ymax = 120.0
+CarpetX::zmax = 120.0
+
+CarpetX::ncells_x = 120
+CarpetX::ncells_y = 120
+CarpetX::ncells_z = 120
+
+CarpetX::max_tile_size_x = 1024000
+CarpetX::max_tile_size_y = 4 #1024000
+CarpetX::max_tile_size_z = 4 #1024000
+
+CarpetX::periodic_x = no
+CarpetX::periodic_y = no
+CarpetX::periodic_z = no
+CarpetX::periodic = no
+# CarpetX::reflection_x = yes
+# CarpetX::reflection_y = yes
+# CarpetX::reflection_z = yes
+# CarpetX::reflection_upper_x = yes
+# CarpetX::reflection_upper_y = yes
+# CarpetX::reflection_upper_z = yes
+
+CarpetX::ghost_size = 3
+
+CarpetX::max_num_levels = 6
+CarpetX::regrid_every = 16
+CarpetX::regrid_error_threshold = 0.03125
+
+CarpetX::prolongation_type = "ddf"
+CarpetX::prolongation_order = 5
+
+ODESolvers::method = "RK4"
+CarpetX::dtfac = 0.25
+
+ADMBase::initial_data = "TwoPunctures"
+ADMBase::initial_lapse = "TwoPunctures-averaged"
+
+# QC-0 setup
+TwoPunctures::par_b =  1.168642873
+TwoPunctures::par_m_plus =  0.453
+TwoPunctures::par_m_minus =  0.453
+TwoPunctures::par_P_plus [1] = +0.3331917498
+TwoPunctures::par_P_minus[1] = -0.3331917498
+
+TwoPunctures::grid_setup_method = "evaluation"
+
+TwoPunctures::TP_epsilon = 1.0e-2
+TwoPunctures::TP_Tiny    = 1.0e-2
+
+TwoPunctures::verbose = no
+
+Z4c::calc_ADM_vars = yes                  # for Weyl
+Z4c::calc_ADMRHS_vars = yes               # for Weyl
+Z4c::calc_constraints = no
+
+Z4c::chi_floor = 1.0e-6
+Z4c::alphaG_floor = 1.0e-8
+Z4c::epsdiss = 0.32
+
+#IO::out_dir = $parfile
+#IO::out_every = 512
+#IO::out_mode = "np"
+#IO::out_proc_every = 1
+#
+#CarpetX::out_plotfile_groups = "
+#ADMBase::metric
+#ADMBase::curv
+#ADMBase::lapse
+#ADMBase::shift
+#"
+#
+#CarpetX::out_silo_vars = "
+#ADMBase::metric
+#ADMBase::curv
+#ADMBase::lapse
+#ADMBase::shift
+#Weyl::Psi4re
+#Weyl::Psi4im
+# Z4c::chi
+# Z4c::gamma_tilde
+# Z4c::K_hat
+# Z4c::A_tilde
+# Z4c::Gam_tilde
+# Z4c::Theta
+# Z4c::alphaG
+# Z4c::betaG
+# Z4c::chi_rhs
+# Z4c::gamma_tilde_rhs
+# Z4c::K_hat_rhs
+# Z4c::A_tilde_rhs
+# Z4c::Gam_tilde_rhs
+# Z4c::Theta_rhs
+# Z4c::alphaG_rhs
+# Z4c::betaG_rhs
+# Z4c::ZtC
+# Z4c::HC
+# Z4c::MtC
+#Z4c::allC
+#"
+
+CarpetX::out_tsv = no
+
+TimerReport::out_every = 5120
+TimerReport::out_filename = "TimerReport"
+TimerReport::output_schedule_timers = no
+TimerReport::n_top_timers = 20

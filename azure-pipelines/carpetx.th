@@ -104,7 +104,13 @@ CactusUtils/TimerReport
 CactusUtils/Vectors
 # CactusUtils/WatchDog
 
-
+# CactusNumerical thorns
+!TARGET   = $ARR
+!TYPE     = git
+!URL      = https://bitbucket.org/cactuscode/cactusnumerical.git
+!REPO_PATH= $2
+!CHECKOUT =
+CactusNumerical/LocalInterp
 
 # Additional Cactus thorns
 !TARGET   = $ARR
@@ -115,10 +121,11 @@ CactusUtils/Vectors
 ExternalLibraries/FFTW3
 ExternalLibraries/GSL
 ExternalLibraries/HDF5
-#DISABLED ExternalLibraries/LAPACK
+ExternalLibraries/LAPACK
 ExternalLibraries/MPI
-ExternalLibraries/OpenBLAS
+ExternalLibraries/BLAS
 ExternalLibraries/PETSc
+ExternalLibraries/pthreads
 ExternalLibraries/hwloc
 ExternalLibraries/zlib
 
@@ -129,6 +136,7 @@ ExternalLibraries/zlib
 !TYPE     = git
 !URL      = https://bitbucket.org/eschnett/cactusamrex.git
 !REPO_PATH= $2
+!REPO_BRANCH = scupp/qc0
 !CHECKOUT = CarpetX/Kokkos CarpetX/SHTOOLS CarpetX/libsharp
 CarpetX/ADIOS2
 CarpetX/ADMBase
@@ -136,19 +144,20 @@ CarpetX/AHFinder
 CarpetX/AMReX
 CarpetX/Arith
 #[const error] CarpetX/BaikalX
-CarpetX/Boost
+#CarpetX/Boost
 CarpetX/BrillLindquist
 CarpetX/CarpetX
 CarpetX/Coordinates
 CarpetX/DGCoordinates
 CarpetX/DGWaveToy
 CarpetX/ErrorEstimator
-CarpetX/Forms
+#CarpetX/Forms
 CarpetX/Hydro
 CarpetX/HydroBase
-CarpetX/HydroToyCarpetX
+#CarpetX/HydroToyCarpetX
 #DISABLED CarpetX/Kokkos
 CarpetX/Maxwell
+CarpetX/Multipole
 CarpetX/MaxwellToyCarpetX
 CarpetX/NSIMD
 #[const error] CarpetX/NewRad
@@ -164,22 +173,13 @@ CarpetX/TestProlongate
 CarpetX/TmunuBase
 CarpetX/TwoPunctures
 CarpetX/WaveToyCarpetX
-CarpetX/Weyl
+#CarpetX/Weyl
+CarpetX/WeylScal4
 CarpetX/Z4c
-CarpetX/googletest
+#CarpetX/googletest
 #DISABLED CarpetX/libsharp
 CarpetX/ssht
 CarpetX/yaml_cpp
-
-# the openPMD thorn is in a directory openPMD-api and GetComponents' REPO_PATH
-# rules require some creativie path settings to get the correct link
-!TARGET   = $ARR
-!TYPE     = git
-!URL      = https://bitbucket.org/eschnett/cactusamrex.git
-!REPO_PATH= ../../arrangements/$1/../../repos/cactusamrex/openPMD_api
-!CHECKOUT =
-CarpetX/openPMD
-
 
 # THCBase thorns
 !TARGET   = $ARR
@@ -189,10 +189,26 @@ CarpetX/openPMD
 !REPO_BRANCH = eschnett/carpetx
 !REPO_PATH= $2
 !CHECKOUT =
-THCBase/AdvectHRSC
-THCBase/CPPUtils
+#THCBase/AdvectHRSC
+#THCBase/CPPUtils
 THCBase/FDCore
-THCBase/HRSCCore
+#THCBase/HRSCCore
+
+# Numerical
+!TARGET   = $ARR
+!TYPE     = git
+!URL      = https://bitbucket.org/cactuscode/numerical.git
+!REPO_PATH= $2
+!CHECKOUT =
+Numerical/AEILocalInterp
+
+# Other
+#!TARGET   = $ARR
+#!TYPE     = git
+#!URL      = https://github.com/rhaas80/ExternalLibraries-NSIMD.git
+#!REPO_PATH= $2
+#!CHECKOUT =
+#ExternalLibraries/NSIMD
 
 # # THCCore thorns
 # !TARGET   = $ARR
