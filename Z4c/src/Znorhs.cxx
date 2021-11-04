@@ -24,7 +24,7 @@ extern "C" void Z4c_RHS(CCTK_ARGUMENTS) {
   DECLARE_CCTK_ARGUMENTS_Z4c_RHS;
   DECLARE_CCTK_PARAMETERS;
   int i, j, k;
-  CCTK_LOOP3_INT(Z4c, cctkGH, i,j,k) {
+  CCTK_LOOP3_ALL(Z4c, cctkGH, i,j,k) {
     const int ind = CCTK_GFINDEX3D(cctkGH, i,j,k);
     chi_rhs[ind] = 0.0;
     gammatxx_rhs[ind] = 0.0;
@@ -48,7 +48,7 @@ extern "C" void Z4c_RHS(CCTK_ARGUMENTS) {
     betaGx_rhs[ind] = 0.0;
     betaGy_rhs[ind] = 0.0;
     betaGz_rhs[ind] = 0.0;
-  } CCTK_ENDLOOP3_INT(Z4c);
+  } CCTK_ENDLOOP3_ALL(Z4c);
 }
 
 } // namespace Z4c
