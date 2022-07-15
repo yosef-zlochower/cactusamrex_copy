@@ -1,6 +1,0 @@
-# WaveToyGPU has CUDA code in cxx files, so use nvcc to compile them
-ifeq ($(shell echo $(AMREX_ENABLE_CUDA) | tr '[:upper:]' '[:lower:]'),yes)
-  CXX:=$(CUCC)
-  CXXFLAGS:=$(CUCCFLAGS)
-endif
-
