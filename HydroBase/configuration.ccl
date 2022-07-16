@@ -1,7 +1,3 @@
 # Configuration definition for thorn hydroBase
 
 REQUIRES CarpetX
-
-OPTIONAL CUDA
-{
-}
