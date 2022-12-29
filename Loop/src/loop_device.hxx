@@ -168,6 +168,22 @@ public:
     loop_box_device<CI, CJ, CK, VS>(f, imin, imax, inormal);
   }
 
+  // Loop over all interior points plus one ghost cell at each side
+/*  template <int CI, int CJ, int CK, int VS = 1, typename F>
+  inline CCTK_ATTRIBUTE_ALWAYS_INLINE void
+  loop_intp1_device(const std::array<int, dim> &group_nghostzones,
+                    const F &f) const {
+    const std::array<int, dim> offset{CI, CJ, CK};
+    std::array<int, dim> imin, imax;
+    for (int d = 0; d < dim; ++d) {
+      imin[d] = std::max(tmin[d], nghostzones[d] - 1);
+      imax[d] = std::min(tmax[d], lsh[d] - offset[d] - nghostzones[d] + 1);
+    }
+    const std::array<int, dim> inormal{0, 0, 0};
+
+    loop_box_device<CI, CJ, CK, VS>(f, imin, imax, inormal);
+  }*/
+
   // Loop over a part of the domain. Loop over the interior first,
   // then faces, then edges, then corners.
   template <int CI, int CJ, int CK, int VS = 1, typename F>

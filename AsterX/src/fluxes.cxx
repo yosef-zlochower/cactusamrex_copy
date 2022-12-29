@@ -187,6 +187,85 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
   const vec<GF3D2<const CCTK_REAL>, dim> gf_beta{betax, betay, betaz};
   const smat<GF3D2<const CCTK_REAL>, dim> gf_g{gxx, gxy, gxz, gyy, gyz, gzz};
 
+
+
+
+
+
+
+  // ********** BEGIN MODIFICATIONS **********
+
+  // Ghost size minus 1
+  const array<int, dim> ngh_m1 = {
+    cctk_nghostzones[0] - 1,
+    cctk_nghostzones[1] - 1,
+    cctk_nghostzones[2] - 1
+  };
+
+  // Cell-centered layout with one ghost cell in each direction
+  vect<int, dim> imin, imax;
+  GridDescBase(cctkGH).box_int<1, 1, 1>(ngh_m1, imin, imax);
+  const GF3D5layout layout(imin, imax);
+
+  /* Two temporary tile-sized local arrays for each primitive to store the two
+   * reconstructed states from the center to the faces of each cell:
+   * rho, eps, vel (3 components), B_vec (3 components) => 2*8 = 16             */
+  const int ntmps = 16;
+  GF3D5vector<CCTK_REAL> tmps(layout, ntmps);
+  int itmp = 0;
+
+
+  // Helper lambdas
+  const auto make_gf = [&]() {
+    return GF3D5<CCTK_REAL>(tmps(itmp++));
+  };
+
+  // FIXME: use std::invoke_result_t instead of std::result_of_t (deprecated in C++20)?
+  const auto make_vec2 = [&](const auto &f) {
+    return vec<result_of_t<decltype(f)()>, 2>([&](int) { return f(); });
+  };
+
+  const auto make_vec2_gf = [&]() {
+    return make_vec2(make_gf);
+  };
+
+
+  // Build all the needed tile-sized local arrays
+  /* **NOTE** If the following lines are uncommented, the code only compiles on
+   *          CPU machines                                                      */ 
+//  const vec<GF3D5<CCTK_REAL>, 2> gf_rho_rc(make_vec2_gf());
+/*  const vec<GF3D5<CCTK_REAL>, 2> gf_eps_rc(make_vec2_gf());
+  const vec<GF3D5<CCTK_REAL>, 2> gf_velx_rc(make_vec2_gf());
+  const vec<GF3D5<CCTK_REAL>, 2> gf_vely_rc(make_vec2_gf());
+  const vec<GF3D5<CCTK_REAL>, 2> gf_velz_rc(make_vec2_gf());
+  const vec<GF3D5<CCTK_REAL>, 2> gf_Bx_rc(make_vec2_gf());
+  const vec<GF3D5<CCTK_REAL>, 2> gf_By_rc(make_vec2_gf());
+  const vec<GF3D5<CCTK_REAL>, 2> gf_Bz_rc(make_vec2_gf());*/
+
+
+  /* Loop over the interior cells plus one ghost cell on each side, reconstruct
+   * the primitives on both faces of each cell and save the reconstructed values
+   * in the tile-sized local arrays built above                                 */
+/*  grid.loop_intp1_device<1, 1, 1>(
+      grid.nghostzones,
+      [=] CCTK_DEVICE(const PointDesc &p) CCTK_ATTRIBUTE_ALWAYS_INLINE { 
+
+
+      // Do something
+
+
+    });*/
+
+  // ********** END MODIFICATIONS **********
+
+
+
+
+
+
+
+
+
   // Face-centred grid functions (in direction `dir`)
   constexpr array<int, dim> face_centred = {!(dir == 0), !(dir == 1),
                                             !(dir == 2)};
