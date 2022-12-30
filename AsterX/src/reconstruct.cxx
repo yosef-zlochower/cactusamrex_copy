@@ -57,12 +57,13 @@ reconstruct(const GF3D2<const CCTK_REAL> &gf_var, const PointDesc &p,
   switch (reconstruction) {
 
   case reconstruction_t::Godunov: {
-    CCTK_REAL var_m = gf_var(Im);
+/*    CCTK_REAL var_m = gf_var(Im);
     CCTK_REAL var_p = gf_var(Ip);
-    return array<CCTK_REAL, 2>{var_m, var_p};
+    return array<CCTK_REAL, 2>{var_m, var_p};*/
+    return array<CCTK_REAL, 2> {0., 0.};
   }
 
-  case reconstruction_t::minmod: {
+/*  case reconstruction_t::minmod: {
     // reconstructs values of Im and Ip at the common face between these
     // two cells
     CCTK_REAL var_slope_p = gf_var(Ipp) - gf_var(Ip);
@@ -73,20 +74,30 @@ reconstruct(const GF3D2<const CCTK_REAL> &gf_var, const PointDesc &p,
     // reconstructed Ip on its "minus/left" side
     CCTK_REAL var_p = gf_var(Ip) - minmod(var_slope_p, var_slope_c) / 2;
     return array<CCTK_REAL, 2>{var_m, var_p};
+  }*/
+
+  case reconstruction_t::minmod: {
+    const auto gfdiff_m     = gf_var(p.I)           - gf_var(p.I - DI[dir]);
+    const auto gfdiff_p     = gf_var(p.I + DI[dir]) - gf_var(p.I);
+    const auto minmod_term  = 0.5*minmod(gfdiff_m, gfdiff_m);
+    const auto var_rc_m     = gf_var(p.I) - minmod_term;
+    const auto var_rc_p     = gf_var(p.I) + minmod_term;
+    return array<CCTK_REAL, 2> {var_rc_m, var_rc_p};
   }
 
   case reconstruction_t::monocentral: {
     // reconstructs values of Im and Ip at the common face between these
     // two cells
     // reconstructed Im on its "plus/right" side
-    CCTK_REAL var_slope_p = gf_var(Ip) - gf_var(Im);
+/*    CCTK_REAL var_slope_p = gf_var(Ip) - gf_var(Im);
     CCTK_REAL var_slope_m = gf_var(Im) - gf_var(Imm);
     CCTK_REAL var_m = gf_var(Im) + monocentral(var_slope_p, var_slope_m) / 2;
     // reconstructed Ip on its "minus/left" side
     var_slope_p = gf_var(Ipp) - gf_var(Ip);
     var_slope_m = gf_var(Ip) - gf_var(Im);
     CCTK_REAL var_p = gf_var(Ip) - monocentral(var_slope_p, var_slope_m) / 2;
-    return array<CCTK_REAL, 2>{var_m, var_p};
+    return array<CCTK_REAL, 2>{var_m, var_p};*/
+    return array<CCTK_REAL, 2> {0., 0.};
   }
 
   case reconstruction_t::ppm: {
@@ -101,7 +112,7 @@ reconstruct(const GF3D2<const CCTK_REAL> &gf_var, const PointDesc &p,
     // Start calculating left (i-1/2) and right (i+1/2) faces unique
     // values: Eq. (A1) in https://arxiv.org/pdf/astro-ph/0503420.pdf with
     // 1/8 --> 1/6 Equiv. to Eq. (1.6) in C&W (1984)
-    CCTK_REAL var_slope_p = gf_var(Ip) - gf_var(Im);
+/*    CCTK_REAL var_slope_p = gf_var(Ip) - gf_var(Im);
     CCTK_REAL var_slope_m = gf_var(Im) - gf_var(Imm);
     CCTK_REAL grad_m = monocentral(var_slope_p, var_slope_m);
     var_slope_p = gf_var(Ipp) - gf_var(Ip);
@@ -170,7 +181,8 @@ reconstruct(const GF3D2<const CCTK_REAL> &gf_var, const PointDesc &p,
     // Keep right value of cell i-1 as i-1/2-eps
     CCTK_REAL var_m = right_face;
 
-    return array<CCTK_REAL, 2>{var_m, var_p};
+    return array<CCTK_REAL, 2>{var_m, var_p};*/
+    return array<CCTK_REAL, 2> {0., 0.};
   }
 
   default:

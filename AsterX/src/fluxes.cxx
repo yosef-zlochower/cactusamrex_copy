@@ -188,104 +188,147 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
   const smat<GF3D2<const CCTK_REAL>, dim> gf_g{gxx, gxy, gxz, gyy, gyz, gzz};
 
 
-
-
-
-
-
-  // ********** BEGIN MODIFICATIONS **********
-
-  // Ghost size minus 1
+  // Cell-centered layout with one ghost cell in each direction
   const array<int, dim> ngh_m1 = {
     cctk_nghostzones[0] - 1,
     cctk_nghostzones[1] - 1,
     cctk_nghostzones[2] - 1
   };
 
-  // Cell-centered layout with one ghost cell in each direction
   vect<int, dim> imin, imax;
   GridDescBase(cctkGH).box_int<1, 1, 1>(ngh_m1, imin, imax);
   const GF3D5layout layout(imin, imax);
 
+
   /* Two temporary tile-sized local arrays for each primitive to store the two
-   * reconstructed states from the center to the faces of each cell:
-   * rho, eps, vel (3 components), B_vec (3 components) => 2*8 = 16             */
+   * reconstructed states from the center to the faces of each cell             */
+  // TODO: use the staggered magnetic field instead of reconstructing it
   const int ntmps = 16;
   GF3D5vector<CCTK_REAL> tmps(layout, ntmps);
-  int itmp = 0;
+
+  const vec<GF3D5<CCTK_REAL>, 2> tile_rho_rc_cell   {tmps(0),  tmps(1)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_eps_rc_cell   {tmps(2),  tmps(3)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_velx_rc_cell  {tmps(4),  tmps(5)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_vely_rc_cell  {tmps(6),  tmps(7)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_velz_rc_cell  {tmps(8),  tmps(9)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_Bvecx_rc_cell {tmps(10), tmps(11)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_Bvecy_rc_cell {tmps(12), tmps(13)};
+  const vec<GF3D5<CCTK_REAL>, 2> tile_Bvecz_rc_cell {tmps(14), tmps(15)};
 
 
-  // Helper lambdas
-  const auto make_gf = [&]() {
-    return GF3D5<CCTK_REAL>(tmps(itmp++));
-  };
-
-  // FIXME: use std::invoke_result_t instead of std::result_of_t (deprecated in C++20)?
-  const auto make_vec2 = [&](const auto &f) {
-    return vec<result_of_t<decltype(f)()>, 2>([&](int) { return f(); });
-  };
-
-  const auto make_vec2_gf = [&]() {
-    return make_vec2(make_gf);
-  };
-
-
-  // Build all the needed tile-sized local arrays
-  /* **NOTE** If the following lines are uncommented, the code only compiles on
-   *          CPU machines                                                      */ 
-//  const vec<GF3D5<CCTK_REAL>, 2> gf_rho_rc(make_vec2_gf());
-/*  const vec<GF3D5<CCTK_REAL>, 2> gf_eps_rc(make_vec2_gf());
-  const vec<GF3D5<CCTK_REAL>, 2> gf_velx_rc(make_vec2_gf());
-  const vec<GF3D5<CCTK_REAL>, 2> gf_vely_rc(make_vec2_gf());
-  const vec<GF3D5<CCTK_REAL>, 2> gf_velz_rc(make_vec2_gf());
-  const vec<GF3D5<CCTK_REAL>, 2> gf_Bx_rc(make_vec2_gf());
-  const vec<GF3D5<CCTK_REAL>, 2> gf_By_rc(make_vec2_gf());
-  const vec<GF3D5<CCTK_REAL>, 2> gf_Bz_rc(make_vec2_gf());*/
-
-
-  /* Loop over the interior cells plus one ghost cell on each side, reconstruct
-   * the primitives on both faces of each cell and save the reconstructed values
-   * in the tile-sized local arrays built above                                 */
-/*  grid.loop_intp1_device<1, 1, 1>(
+  // Loop over all internal cells plus one ghost cell on each side
+  grid.loop_intp1_device<1, 1, 1>(
       grid.nghostzones,
       [=] CCTK_DEVICE(const PointDesc &p) CCTK_ATTRIBUTE_ALWAYS_INLINE { 
+        // Reconstruct the primitives on both faces of each cell 
+        const vec<CCTK_REAL, 2> rho_rc_cell   {reconstruct_pt(rho,   p)};
+        const vec<CCTK_REAL, 2> eps_rc_cell   {reconstruct_pt(eps,   p)};
+        const vec<CCTK_REAL, 2> velx_rc_cell  {reconstruct_pt(velx,  p)};
+        const vec<CCTK_REAL, 2> vely_rc_cell  {reconstruct_pt(vely,  p)};
+        const vec<CCTK_REAL, 2> velz_rc_cell  {reconstruct_pt(velz,  p)};
+        const vec<CCTK_REAL, 2> Bvecx_rc_cell {reconstruct_pt(Bvecx, p)};
+        const vec<CCTK_REAL, 2> Bvecy_rc_cell {reconstruct_pt(Bvecy, p)};
+        const vec<CCTK_REAL, 2> Bvecz_rc_cell {reconstruct_pt(Bvecz, p)};
+
+        // Get the GF3D5 index corresponding to the current point
+        const GF3D5index index(layout, p.I);
+
+        /* Save the reconstructed values in the tile-sized local arrays built
+         * above                                                                */
+        tile_rho_rc_cell(0).store(index,   rho_rc_cell(0));
+        tile_eps_rc_cell(0).store(index,   eps_rc_cell(0));
+        tile_velx_rc_cell(0).store(index,  velx_rc_cell(0));
+        tile_vely_rc_cell(0).store(index,  vely_rc_cell(0));
+        tile_velz_rc_cell(0).store(index,  velz_rc_cell(0));
+        tile_Bvecx_rc_cell(0).store(index, Bvecx_rc_cell(0));
+        tile_Bvecy_rc_cell(0).store(index, Bvecy_rc_cell(0));
+        tile_Bvecz_rc_cell(0).store(index, Bvecz_rc_cell(0));
+
+        tile_rho_rc_cell(1).store(index,   rho_rc_cell(1));
+        tile_eps_rc_cell(1).store(index,   eps_rc_cell(1));
+        tile_velx_rc_cell(1).store(index,  velx_rc_cell(1));
+        tile_vely_rc_cell(1).store(index,  vely_rc_cell(1));
+        tile_velz_rc_cell(1).store(index,  velz_rc_cell(1));
+        tile_Bvecx_rc_cell(1).store(index, Bvecx_rc_cell(1));
+        tile_Bvecy_rc_cell(1).store(index, Bvecy_rc_cell(1));
+        tile_Bvecz_rc_cell(1).store(index, Bvecz_rc_cell(1));
+    });
 
 
-      // Do something
 
+  /* Loop over all interior faces (including the ones delimiting a ghost cell on
+   * each side)                                                                 */
+  constexpr auto DI = PointDesc::DI;
 
-    });*/
-
-  // ********** END MODIFICATIONS **********
-
-
-
-
-
-
-
-
-
-  // Face-centred grid functions (in direction `dir`)
-  constexpr array<int, dim> face_centred = {!(dir == 0), !(dir == 1),
-                                            !(dir == 2)};
+  constexpr array<int, dim> face_centred = {
+    not (dir == 0), not (dir == 1), not (dir == 2)
+  };
 
   grid.loop_int_device<face_centred[0], face_centred[1], face_centred[2]>(
       grid.nghostzones,
       [=] CCTK_DEVICE(const PointDesc &p) CCTK_ATTRIBUTE_ALWAYS_INLINE {
-        /* Reconstruct primitives from the cells on left (indice 0) and right
-         * (indice 1) side of this face rc = reconstructed variables or
-         * computed from reconstructed variables */
-        const vec<CCTK_REAL, 2> rho_rc{reconstruct_pt(rho, p)};
-        const vec<vec<CCTK_REAL, 2>, 3> vels_rc([&](int i) ARITH_INLINE {
-          return vec<CCTK_REAL, 2>{reconstruct_pt(gf_vels(i), p)};
-        });
-        const vec<CCTK_REAL, 2> eps_rc{reconstruct_pt(eps, p)};
-        const vec<vec<CCTK_REAL, 2>, 3> Bs_rc([&](int i) ARITH_INLINE {
-          return vec<CCTK_REAL, 2>{reconstruct_pt(gf_Bvecs(i), p)};
-        });
+        /* Get the GF3D5 indices corresponding to the current and previous
+         * points                                                               */
+        const GF3D5index index   (layout, p.I);
+        const GF3D5index index_m1(layout, p.I - DI[dir]);
 
-        /* Interpolate metric components from vertices to faces */
+        printf("tile_rho_rc_cell(1)(index_m1) = %f, tile_rho_rc_cell(0)(index) = %f\n",
+               tile_rho_rc_cell(1)(index_m1), tile_rho_rc_cell(0)(index));
+
+        /* Retrieve the values of the primitives reconstructed on each side of
+         * the current face from the tile-sized local arrays                    */
+        const vec<CCTK_REAL, 2> rho_rc_face {
+          tile_rho_rc_cell(1)(index_m1),
+          tile_rho_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> eps_rc_face {
+          tile_eps_rc_cell(1)(index_m1),
+          tile_eps_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> velx_rc_face {
+          tile_velx_rc_cell(1)(index_m1),
+          tile_velx_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> vely_rc_face {
+          tile_vely_rc_cell(1)(index_m1),
+          tile_vely_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> velz_rc_face {
+          tile_velz_rc_cell(1)(index_m1),
+          tile_velz_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> Bvecx_rc_face {
+          tile_Bvecx_rc_cell(1)(index_m1),
+          tile_Bvecx_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> Bvecy_rc_face {
+          tile_Bvecy_rc_cell(1)(index_m1),
+          tile_Bvecy_rc_cell(0)(index)
+        };
+
+        const vec<CCTK_REAL, 2> Bvecz_rc_face {
+          tile_Bvecz_rc_cell(1)(index_m1),
+          tile_Bvecz_rc_cell(0)(index)
+       };
+
+
+        // Auxiliary vectors
+        const vec<vec<CCTK_REAL, 2>, 3> vels_rc_face {
+          velx_rc_face, vely_rc_face, velz_rc_face
+        };
+
+        const vec<vec<CCTK_REAL, 2>, 3> Bs_rc_face {
+          Bvecx_rc_face, Bvecy_rc_face, Bvecz_rc_face
+        };
+
+
+        // Interpolate spacetime variables from the vertices to the current face
         const CCTK_REAL alp_avg = calc_avg_v2f(alp, p, dir);
         const vec<CCTK_REAL, 3> betas_avg([&](int i) ARITH_INLINE {
           return calc_avg_v2f(gf_beta(i), p, dir);
@@ -294,166 +337,183 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
           return calc_avg_v2f(gf_g(i, j), p, dir);
         });
 
-        /* determinant of spatial metric */
+        // Determinant of the spatial metric
         const CCTK_REAL detg_avg = calc_det(g_avg);
-        const CCTK_REAL sqrtg = sqrt(detg_avg);
-        /* co-velocity measured by Euleian observer: v_j */
-        const vec<vec<CCTK_REAL, 2>, 3> vlows_rc =
-            calc_contraction(g_avg, vels_rc);
-        /* vtilde^i = alpha * v^i - beta^i */
-        const vec<vec<CCTK_REAL, 2>, 3> vtildes_rc([&](int i) ARITH_INLINE {
+        const CCTK_REAL sqrtg    = sqrt(detg_avg);
+
+        // Co-velocity measured by the Eulerian observer: v_j
+        const vec<vec<CCTK_REAL, 2>, 3> vlows_rc_face =
+            calc_contraction(g_avg, vels_rc_face);
+
+        // vtilde^i = alpha * v^i - beta^i
+        const vec<vec<CCTK_REAL, 2>, 3> vtildes_rc_face([&](int i) ARITH_INLINE {
           return vec<CCTK_REAL, 2>([&](int f) ARITH_INLINE {
-            return alp_avg * vels_rc(i)(f) - betas_avg(i);
+            return alp_avg * vels_rc_face(i)(f) - betas_avg(i);
           });
         });
-        /* Lorentz factor: W = 1 / sqrt(1 - v^2) */
-        const vec<CCTK_REAL, 2> w_lorentz_rc([&](int f) ARITH_INLINE {
-          return 1.0 / sqrt(1.0 - calc_contraction(vlows_rc, vels_rc)(f));
+
+        // Lorentz factor
+        const vec<CCTK_REAL, 2> w_lorentz_rc_face([&](int f) ARITH_INLINE {
+          return 1.0 / sqrt(1.0 - calc_contraction(vlows_rc_face, vels_rc_face)(f));
         });
 
-        /* alpha * b0 = W * B^i * v_i */
-        const vec<CCTK_REAL, 2> alp_b0_rc([&](int f) ARITH_INLINE {
-          return w_lorentz_rc(f) * calc_contraction(Bs_rc, vlows_rc)(f);
+        // alpha * b0 = W * B^i * v_i
+        const vec<CCTK_REAL, 2> alp_b0_rc_face([&](int f) ARITH_INLINE {
+          return w_lorentz_rc_face(f) * calc_contraction(Bs_rc_face, vlows_rc_face)(f);
         });
-        /* covariant magnetic field measured by the Eulerian observer */
-        const vec<vec<CCTK_REAL, 2>, 3> Blows_rc =
-            calc_contraction(g_avg, Bs_rc);
-        /* B^2 = B^i * B_i */
-        const vec<CCTK_REAL, 2> B2_rc = calc_contraction(Bs_rc, Blows_rc);
-        /* covariant magnetic field measured by the comoving observer:
-         *  b_i = B_i/W + alpha*b^0*v_i */
-        const vec<vec<CCTK_REAL, 2>, 3> blows_rc([&](int i) ARITH_INLINE {
+
+        // Covariant magnetic field measured by the Eulerian observer
+        const vec<vec<CCTK_REAL, 2>, 3> Blows_rc_face =
+            calc_contraction(g_avg, Bs_rc_face);
+
+        // B^2
+        const vec<CCTK_REAL, 2> B2_rc_face = calc_contraction(Bs_rc_face, Blows_rc_face);
+
+        /* Covariant magnetic field measured by the comoving observer:
+         *  b_i = B_i / W + alpha * b^0 * v_i                                   */
+        const vec<vec<CCTK_REAL, 2>, 3> blows_rc_face([&](int i) ARITH_INLINE {
           return vec<CCTK_REAL, 2>([&](int f) ARITH_INLINE {
-            return Blows_rc(i)(f) / w_lorentz_rc(f) +
-                   alp_b0_rc(f) * vlows_rc(i)(f);
+            return Blows_rc_face(i)(f) / w_lorentz_rc_face(f) +
+                   alp_b0_rc_face(f) * vlows_rc_face(i)(f);
           });
         });
-        /* b^2 = b^{\mu} * b_{\mu} */
-        const vec<CCTK_REAL, 2> bsq_rc([&](int f) ARITH_INLINE {
-          return (B2_rc(f) + pow2(alp_b0_rc(f))) / pow2(w_lorentz_rc(f));
+
+        // b^2 = b^\mu * b_\mu
+        const vec<CCTK_REAL, 2> b2_rc_face([&](int f) ARITH_INLINE {
+          return (B2_rc_face(f) + pow2(alp_b0_rc_face(f))) / pow2(w_lorentz_rc_face(f));
         });
 
-        /* componets correspond to the dir we are considering */
+        // Components of some vectors along the current direction
         const CCTK_REAL beta_avg = betas_avg(dir);
-        const vec<CCTK_REAL, 2> vel_rc{vels_rc(dir)};
-        const vec<CCTK_REAL, 2> B_rc{Bs_rc(dir)};
-        const vec<CCTK_REAL, 2> vtilde_rc{vtildes_rc(dir)};
+        const vec<CCTK_REAL, 2> vel_rc_face{vels_rc_face(dir)};
+        const vec<CCTK_REAL, 2> B_rc_face{Bs_rc_face(dir)};
+        const vec<CCTK_REAL, 2> vtilde_rc_face{vtildes_rc_face(dir)};
 
-        // TODO: Compute pressure based on user-specified EOS.
-        // Currently, computing press for classical ideal gas from reconstructed
-        // vars
-
-        // Ideal gas case {
-        /* pressure for ideal gas EOS */
-        const vec<CCTK_REAL, 2> press_rc([&](int f) ARITH_INLINE {
-          return eps_rc(f) * rho_rc(f) * (gamma - 1);
-        });
-        /* cs2 for ideal gas EOS */
-        const vec<CCTK_REAL, 2> cs2_rc([&](int f) ARITH_INLINE {
-          return (gamma - 1.0) * eps_rc(f) / (eps_rc(f) + 1.0 / gamma);
-        });
-        /* enthalpy h for ideal gas EOS */
-        const vec<CCTK_REAL, 2> h_rc([&](int f) ARITH_INLINE {
-          return 1.0 + eps_rc(f) + press_rc(f) / rho_rc(f);
-        });
-        // } Ideal gas case
-
-        /* Computing conservatives from primitives: */
-
-        /* dens = sqrt(g) * D = sqrt(g) * (rho * W) */
-        const vec<CCTK_REAL, 2> dens_rc([&](int f) ARITH_INLINE {
-          return sqrtg * rho_rc(f) * w_lorentz_rc(f);
+        // Pressure (ideal gas EOS)
+        // TODO: compute this from a user-specified EOS
+        const vec<CCTK_REAL, 2> press_rc_face([&](int f) ARITH_INLINE {
+          return eps_rc_face(f) * rho_rc_face(f) * (gamma - 1.0);
         });
 
-        /* auxiliary: dens * h * W = sqrt(g) * rho * h * W^2 */
-        const vec<CCTK_REAL, 2> dens_h_W_rc([&](int f) ARITH_INLINE {
-          return dens_rc(f) * h_rc(f) * w_lorentz_rc(f);
+        // Sound speed squared (ideal gas EOS )
+        // TODO: compute this from a user-specified EOS
+        const vec<CCTK_REAL, 2> cs2_rc_face([&](int f) ARITH_INLINE {
+          return (gamma - 1.0) * eps_rc_face(f) / (eps_rc_face(f) + 1.0 / gamma);
         });
-        /* auxiliary: sqrt(g) * (rho*h + b^2)*W^2 */
-        const vec<CCTK_REAL, 2> dens_h_W_plus_sqrtg_W2b2_rc =
-            dens_h_W_rc + sqrtg * (pow2(alp_b0_rc) + B2_rc);
-        /* auxiliary: (pgas + pmag) */
-        const vec<CCTK_REAL, 2> press_plus_pmag_rc = press_rc + 0.5 * bsq_rc;
 
-        /* mom_i = sqrt(g)*S_i = sqrt(g)((rho*h+b^2)*W^2*v_i - alpha*b^0*b_i) */
-        const vec<vec<CCTK_REAL, 2>, 3> moms_rc([&](int i) ARITH_INLINE {
+        // Enthalpy for ideal gas EOS
+        // TODO: compute this from a user-specified EOS
+        const vec<CCTK_REAL, 2> h_rc_face([&](int f) ARITH_INLINE {
+          return 1.0 + eps_rc_face(f) + press_rc_face(f) / rho_rc_face(f);
+        });
+
+
+        /* Compute the conservatives from the primitives *
+         * --------------------------------------------- */
+        // dens = sqrt(g) * D = sqrt(g) * rho * W
+        const vec<CCTK_REAL, 2> dens_rc_face([&](int f) ARITH_INLINE {
+          return sqrtg * rho_rc_face(f) * w_lorentz_rc_face(f);
+        });
+
+        // Auxiliary: dens * h * W = sqrt(g) * rho * h * W^2
+        const vec<CCTK_REAL, 2> dens_h_W_rc_face([&](int f) ARITH_INLINE {
+          return dens_rc_face(f) * h_rc_face(f) * w_lorentz_rc_face(f);
+        });
+
+        // Auxiliary: sqrt(g) * (rho*h + b^2) * W^2
+        const vec<CCTK_REAL, 2> dens_h_W_plus_sqrtg_W2b2_rc_face =
+          dens_h_W_rc_face + sqrtg * (pow2(alp_b0_rc_face) + B2_rc_face);
+
+        // Auxiliary: ptot = pgas + pmag (pmag = b^2/2)
+        const vec<CCTK_REAL, 2> ptot_rc_face = press_rc_face + 0.5 * b2_rc_face;
+
+        // mom_i = sqrt(g) * S_i = sqrt(g)*((rho*h + b^2)*W^2*v_i - alpha*b^0*b_i)
+        const vec<vec<CCTK_REAL, 2>, 3> moms_rc_face([&](int i) ARITH_INLINE {
           return vec<CCTK_REAL, 2>([&](int f) ARITH_INLINE {
-            return dens_h_W_plus_sqrtg_W2b2_rc(f) * vlows_rc(i)(f) -
-                   sqrtg * alp_b0_rc(f) * blows_rc(i)(f);
+            return dens_h_W_plus_sqrtg_W2b2_rc_face(f) * vlows_rc_face(i)(f) -
+                   sqrtg * alp_b0_rc_face(f) * blows_rc_face(i)(f);
           });
         });
 
         /* tau = sqrt(g)*t =
-         *  sqrt(g)((rho*h + b^2)*W^2 - (pgas+pmag) - (alpha*b^0)^2 - D) */
-        const vec<CCTK_REAL, 2> tau_rc =
-            dens_h_W_rc - dens_rc + sqrtg * (B2_rc - press_plus_pmag_rc);
+         *   sqrt(g)((rho*h + b^2)*W^2 - (pgas+pmag) - (alpha*b^0)^2 - D)       */
+        const vec<CCTK_REAL, 2> tau_rc_face =
+          dens_h_W_rc_face - dens_rc_face + sqrtg * (B2_rc_face - ptot_rc_face);
 
-        /* Btildes^i = sqrt(g) * B^i */
-        const vec<vec<CCTK_REAL, 2>, 3> Btildes_rc(
-            [&](int i) ARITH_INLINE { return sqrtg * Bs_rc(i); });
+        // Btildes^i = sqrt(g) * B^i
+        const vec<vec<CCTK_REAL, 2>, 3> Btildes_rc_face(
+            [&](int i) ARITH_INLINE { return sqrtg * Bs_rc_face(i); });
 
-        /* Computing fluxes of conserved variables: */
 
-        /* auxiliary: unit in 'dir' */
+        /* Compute the fluxes of the conservatives *
+         * --------------------------------------- */
+        // Auxiliary: unit vector along the current direction
         const vec<CCTK_REAL, 3> unit_dir{vec<int, 3>::unit(dir)};
-        /* auxiliary: alpha * sqrt(g) */
-        const CCTK_REAL alp_sqrtg = alp_avg * sqrtg;
-        /* auxiliary: B^i / W */
-        const vec<CCTK_REAL, 2> B_over_w_lorentz_rc(
-            [&](int f) ARITH_INLINE { return B_rc(f) / w_lorentz_rc(f); });
 
-        /* flux(dens) = sqrt(g) * D * vtilde^i = sqrt(g) * rho * W * vtilde^i */
+        // Auxiliary: alpha * sqrt(g)
+        const CCTK_REAL alp_sqrtg = alp_avg * sqrtg;
+
+        // Auxiliary: B^i / W
+        const vec<CCTK_REAL, 2> B_over_w_lorentz_rc_face(
+            [&](int f) ARITH_INLINE { return B_rc_face(f) / w_lorentz_rc_face(f); });
+
+        // flux(dens) = sqrt(g) * D * vtilde^i = sqrt(g) * rho * W * vtilde^i */
         const vec<CCTK_REAL, 2> flux_dens(
-            [&](int f) ARITH_INLINE { return dens_rc(f) * vtilde_rc(f); });
+            [&](int f) ARITH_INLINE { return dens_rc_face(f) * vtilde_rc_face(f); });
 
         /* flux(mom_j)^i = sqrt(g)*(
-         *  S_j*vtilde^i + alpha*((pgas+pmag)*delta^i_j - b_jB^i/W) ) */
+         *   S_j * vtilde^i + alpha*((pgas+pmag)*delta^i_j - b_j*B^i/W) )       */
         const vec<vec<CCTK_REAL, 2>, 3> flux_moms([&](int j) ARITH_INLINE {
           return vec<CCTK_REAL, 2>([&](int f) ARITH_INLINE {
-            return moms_rc(j)(f) * vtilde_rc(f) +
-                   alp_sqrtg * (press_plus_pmag_rc(f) * unit_dir(j) -
-                                blows_rc(j)(f) * B_over_w_lorentz_rc(f));
+            return moms_rc_face(j)(f) * vtilde_rc_face(f) +
+                   alp_sqrtg * (ptot_rc_face(f) * unit_dir(j) -
+                                blows_rc_face(j)(f) * B_over_w_lorentz_rc_face(f));
           });
         });
 
         /* flux(tau) = sqrt(g)*(
-         *  t*vtilde^i + alpha*((pgas+pmag)*v^i-alpha*b0*B^i/W) ) */
+         *   t*vtilde^i + alpha*((pgas+pmag)*v^i-alpha*b0*B^i/W) )              */
         const vec<CCTK_REAL, 2> flux_tau([&](int f) ARITH_INLINE {
-          return tau_rc(f) * vtilde_rc(f) +
-                 alp_sqrtg * (press_plus_pmag_rc(f) * vel_rc(f) -
-                              alp_b0_rc(f) * B_over_w_lorentz_rc(f));
+          return tau_rc_face(f) * vtilde_rc_face(f) +
+                 alp_sqrtg * (ptot_rc_face(f) * vel_rc_face(f) -
+                              alp_b0_rc_face(f) * B_over_w_lorentz_rc_face(f));
         });
 
-        /* electric field E_i = \tilde\epsilon_{ijk} Btilde_j * vtilde_k */
-        const vec<vec<CCTK_REAL, 2>, 3> Es_rc =
-            calc_cross_product(Btildes_rc, vtildes_rc);
-        /* flux(Btildes) = {{0, Ez, -Ey}, {-Ez, 0, Ex}, {Ey, -Ex, 0}} */
+        // Electric field E_i = \epsilon_{ijk} Btilde_j * vtilde_k */
+        const vec<vec<CCTK_REAL, 2>, 3> Es_rc_face =
+            calc_cross_product(Btildes_rc_face, vtildes_rc_face);
+
+        // flux(Btildes) = {{0, Ez, -Ey}, {-Ez, 0, Ex}, {Ey, -Ex, 0}}
         const vec<vec<CCTK_REAL, 2>, 3> flux_Btildes =
-            calc_cross_product(unit_dir, Es_rc);
+            calc_cross_product(unit_dir, Es_rc_face);
 
-        /* Calculate eigenvalues: */
 
-        /* variable for either g^xx, g^yy or g^zz depending on the direction */
+        /* Calculate eigenvalues *
+         * --------------------- */
+        // Alias for g^xx, g^yy or g^zz depending on the direction
         const CCTK_REAL u_avg = calc_inv(g_avg, detg_avg)(dir, dir);
-        /* eigenvalues */
-        vec<vec<CCTK_REAL, 4>, 2> lambda =
-            eigenvalues(alp_avg, beta_avg, u_avg, vel_rc, rho_rc, cs2_rc,
-                        w_lorentz_rc, h_rc, bsq_rc);
 
-        /* Calculate numerical fluxes */
-        fluxdenss(dir)(p.I) = calcflux(lambda, dens_rc, flux_dens);
-        fluxmomxs(dir)(p.I) = calcflux(lambda, moms_rc(0), flux_moms(0));
-        fluxmomys(dir)(p.I) = calcflux(lambda, moms_rc(1), flux_moms(1));
-        fluxmomzs(dir)(p.I) = calcflux(lambda, moms_rc(2), flux_moms(2));
-        fluxtaus(dir)(p.I) = calcflux(lambda, tau_rc, flux_tau);
-        fluxBxs(dir)(p.I) =
-            (dir != 0) * calcflux(lambda, Btildes_rc(0), flux_Btildes(0));
-        fluxBys(dir)(p.I) =
-            (dir != 1) * calcflux(lambda, Btildes_rc(1), flux_Btildes(1));
-        fluxBzs(dir)(p.I) =
-            (dir != 2) * calcflux(lambda, Btildes_rc(2), flux_Btildes(2));
+        // Eigenvalues
+        vec<vec<CCTK_REAL, 4>, 2> lambda =
+            eigenvalues(alp_avg, beta_avg, u_avg,
+                        vel_rc_face, rho_rc_face, cs2_rc_face,
+                        w_lorentz_rc_face, h_rc_face, b2_rc_face);
+
+        // Numerical fluxes
+        fluxdenss(dir)(p.I) = calcflux(lambda, dens_rc_face,    flux_dens);
+        fluxmomxs(dir)(p.I) = calcflux(lambda, moms_rc_face(0), flux_moms(0));
+        fluxmomys(dir)(p.I) = calcflux(lambda, moms_rc_face(1), flux_moms(1));
+        fluxmomzs(dir)(p.I) = calcflux(lambda, moms_rc_face(2), flux_moms(2));
+        fluxtaus(dir)(p.I)  = calcflux(lambda, tau_rc_face,     flux_tau);
+        fluxBxs(dir)(p.I)   = (dir != 0) ? calcflux(lambda, Btildes_rc_face(0), flux_Btildes(0)) : 0.0;
+        fluxBys(dir)(p.I)   = (dir != 1) ? calcflux(lambda, Btildes_rc_face(1), flux_Btildes(1)) : 0.0;
+        fluxBzs(dir)(p.I)   = (dir != 2) ? calcflux(lambda, Btildes_rc_face(2), flux_Btildes(2)) : 0.0;
       });
 }
+
+
+
+
 
 void CalcAuxForAvecPsi(CCTK_ARGUMENTS) {
   DECLARE_CCTK_ARGUMENTSX_AsterX_Fluxes;
@@ -484,6 +544,10 @@ void CalcAuxForAvecPsi(CCTK_ARGUMENTS) {
         G(p.I) = alp(p.I) * Psi(p.I) / sqrtg - calc_contraction(betas, A_vert);
       });
 }
+
+
+
+
 
 extern "C" void AsterX_Fluxes(CCTK_ARGUMENTS) {
   DECLARE_CCTK_ARGUMENTS_AsterX_Fluxes;

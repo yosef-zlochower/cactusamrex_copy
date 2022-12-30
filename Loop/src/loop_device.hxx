@@ -169,7 +169,7 @@ public:
   }
 
   // Loop over all interior points plus one ghost cell at each side
-/*  template <int CI, int CJ, int CK, int VS = 1, typename F>
+  template <int CI, int CJ, int CK, int VS = 1, typename F>
   inline CCTK_ATTRIBUTE_ALWAYS_INLINE void
   loop_intp1_device(const std::array<int, dim> &group_nghostzones,
                     const F &f) const {
@@ -182,7 +182,7 @@ public:
     const std::array<int, dim> inormal{0, 0, 0};
 
     loop_box_device<CI, CJ, CK, VS>(f, imin, imax, inormal);
-  }*/
+  }
 
   // Loop over a part of the domain. Loop over the interior first,
   // then faces, then edges, then corners.
