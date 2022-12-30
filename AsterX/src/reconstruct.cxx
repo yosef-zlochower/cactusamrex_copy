@@ -79,7 +79,7 @@ reconstruct(const GF3D2<const CCTK_REAL> &gf_var, const PointDesc &p,
   case reconstruction_t::minmod: {
     const auto gfdiff_m     = gf_var(p.I)           - gf_var(p.I - DI[dir]);
     const auto gfdiff_p     = gf_var(p.I + DI[dir]) - gf_var(p.I);
-    const auto minmod_term  = 0.5*minmod(gfdiff_m, gfdiff_m);
+    const auto minmod_term  = 0.5*minmod(gfdiff_m, gfdiff_p);
     const auto var_rc_m     = gf_var(p.I) - minmod_term;
     const auto var_rc_p     = gf_var(p.I) + minmod_term;
     return array<CCTK_REAL, 2> {var_rc_m, var_rc_p};
