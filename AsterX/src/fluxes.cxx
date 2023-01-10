@@ -272,9 +272,6 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
         const GF3D5index index   (layout, p.I);
         const GF3D5index index_m1(layout, p.I - DI[dir]);
 
-        printf("tile_rho_rc_cell(1)(index_m1) = %f, tile_rho_rc_cell(0)(index) = %f\n",
-               tile_rho_rc_cell(1)(index_m1), tile_rho_rc_cell(0)(index));
-
         /* Retrieve the values of the primitives reconstructed on each side of
          * the current face from the tile-sized local arrays                    */
         const vec<CCTK_REAL, 2> rho_rc_face {
