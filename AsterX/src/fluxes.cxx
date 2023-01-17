@@ -196,7 +196,7 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
   };
 
   vect<int, dim> imin, imax;
-  GridDescBase(cctkGH).box_int<1, 1, 1>(ngh_m1, imin, imax);
+  GridDescBase(cctkGH).box_intp1<1, 1, 1>(ngh_m1, imin, imax);
   const GF3D5layout layout(imin, imax);
 
 
