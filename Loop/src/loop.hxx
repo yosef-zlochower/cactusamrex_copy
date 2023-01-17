@@ -247,6 +247,20 @@ public:
     }
   }
 
+  // Box including all interior points plus one ghost cell at each side 
+  template <int CI, int CJ, int CK>
+  void box_intp1(const std::array<int, dim> &group_nghostzones,
+                 vect<int, dim> &restrict imin,
+                 vect<int, dim> &restrict imax) const {
+    // TODO: call box_intp1 instead
+    const std::array<int, dim> offset{CI, CJ, CK};
+    for (int d = 0; d < dim; ++d) {
+      using std::max, std::min;
+      imin[d] = max(tmin[d], nghostzones[d] - 1);
+      imax[d] = min(tmax[d], lsh[d] - offset[d] - nghostzones[d] + 1);
+    }
+  }
+
   // Loop over all points
   template <int CI, int CJ, int CK, typename F>
   inline CCTK_ATTRIBUTE_ALWAYS_INLINE void
@@ -340,6 +354,8 @@ public:
                   box_all<CI, CJ, CK>(group_nghostzones, all_imin, all_imax);
                   vect<int, dim> int_imin, int_imax;
                   box_int<CI, CJ, CK>(group_nghostzones, int_imin, int_imax);
+                  vect<int, dim> intp1_imin, intp1_imax;
+                  box_intp1<CI, CJ, CK>(group_nghostzones, intp1_imin, intp1_imax);
                   for (int d = 0; d < dim; ++d) {
                     assert(all_imin[d] <= imin[d]);
                     assert(imax[d] <= all_imax[d]);
@@ -421,6 +437,8 @@ public:
                   box_all<CI, CJ, CK>(group_nghostzones, all_imin, all_imax);
                   vect<int, dim> int_imin, int_imax;
                   box_int<CI, CJ, CK>(group_nghostzones, int_imin, int_imax);
+                  vect<int, dim> intp1_imin, intp1_imax;
+                  box_intp1<CI, CJ, CK>(group_nghostzones, intp1_imin, intp1_imax);
                   for (int d = 0; d < dim; ++d) {
                     assert(all_imin[d] <= imin[d]);
                     assert(imax[d] <= all_imax[d]);
@@ -502,6 +520,8 @@ public:
                   box_all<CI, CJ, CK>(group_nghostzones, all_imin, all_imax);
                   vect<int, dim> int_imin, int_imax;
                   box_int<CI, CJ, CK>(group_nghostzones, int_imin, int_imax);
+                  vect<int, dim> intp1_imin, intp1_imax;
+                  box_intp1<CI, CJ, CK>(group_nghostzones, intp1_imin, intp1_imax);
                   for (int d = 0; d < dim; ++d) {
                     assert(all_imin[d] <= imin[d]);
                     assert(imax[d] <= all_imax[d]);
@@ -581,6 +601,8 @@ public:
                   box_all<CI, CJ, CK>(group_nghostzones, all_imin, all_imax);
                   vect<int, dim> int_imin, int_imax;
                   box_int<CI, CJ, CK>(group_nghostzones, int_imin, int_imax);
+                  vect<int, dim> intp1_imin, intp1_imax;
+                  box_intp1<CI, CJ, CK>(group_nghostzones, intp1_imin, intp1_imax);
                   for (int d = 0; d < dim; ++d) {
                     assert(all_imin[d] <= imin[d]);
                     assert(imax[d] <= all_imax[d]);
