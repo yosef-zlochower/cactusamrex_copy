@@ -62,21 +62,14 @@ struct PointDesc {
   friend std::ostream &operator<<(std::ostream &os, const PointDesc &p) {
     os << "PointDesc{"
        << "imin,imax:{" << p.imin << "," << p.imax << "}, "
-       << "ijk:"
-       << "{" << p.i << "," << p.j << "," << p.k << "}, "
-       << "xyz:"
-       << "{" << p.x << "," << p.y << "," << p.z << "}, "
-       << "dxyz:"
-       << "{" << p.dx << "," << p.dy << "," << p.dz << "}, "
+       << "ijk:[" << p.i << "," << p.j << "," << p.k << "], "
+       << "xyz:[" << p.x << "," << p.y << "," << p.z << "], "
+       << "dxyz:[" << p.dx << "," << p.dy << "," << p.dz << "], "
        << "idx:" << p.idx << ", "
-       << "dijk:"
-       << "{" << p.di << "," << p.dj << "," << p.dk << "},"
-       << "np:" << p.np << ","
-       << "nijk:"
-       << "{" << p.NI[0] << "," << p.NI[1] << "," << p.NI[2] << "}"
-       << "i0ijk:"
-       << "{" << p.I0[0] << "," << p.I0[1] << "," << p.I0[2] << "}"
-       << "}";
+       << "dijk:[" << p.di << "," << p.dj << "," << p.dk << "], "
+       << "np:" << p.np << ", "
+       << "NI:" << p.NI << ", "
+       << "I0:" << p.I0 << "}";
     return os;
   }
 };
@@ -186,7 +179,8 @@ public:
         for (int j = imin[1]; j < imax[1]; ++j) {
 #pragma omp simd
           for (int i = imin[0]; i < imax[0]; i += VS) {
-            f(point_desc<CI, CJ, CK>(izero, izero, imin[0], imax[0], i, j, k));
+            const std::array<int, dim> I = {i, j, k};
+            f(point_desc<CI, CJ, CK>(izero, I, imin[0], imax[0], i, j, k));
           }
         }
       }
@@ -198,7 +192,6 @@ public:
         for (int j = imin[1]; j < imax[1]; ++j) {
 #pragma omp simd
           for (int i = imin[0]; i < imax[0]; i += VS) {
-
             const std::array<int, dim> I = {i, j, k};
             std::array<int, dim> I0;
             for (int d = 0; d < dim; ++d) {

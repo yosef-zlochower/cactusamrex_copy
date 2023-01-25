@@ -736,9 +736,8 @@ extern "C" CCTK_INT CarpetX_GetCallFunctionCount() {
 }
 
 void loop_over_blocks(
-    const active_levels_t &active_levels,
-    const std::function<void(int patch, int level, int index, int block,
-                             const cGH *cctkGH)> &block_kernel) {
+    amrex::FabArrayBase &fab,
+    const std::function<void(int index, int block)> &block_kernel) {
   DECLARE_CCTK_PARAMETERS;
 
   // Choose kernel launch method
@@ -765,18 +764,13 @@ void loop_over_blocks(
   case launch_method_t::serial: {
     // No parallelism
 
-    active_levels.loop([&](const auto &restrict leveldata) {
-      // Note: The amrex::MFIter uses global variables and OpenMP barriers
-      int block = 0;
-      const auto mfitinfo = amrex::MFItInfo().EnableTiling();
-      for (amrex::MFIter mfi(*leveldata.fab, mfitinfo); mfi.isValid();
-           ++mfi, ++block) {
-        const MFPointer mfp(mfi);
-        cGH *restrict const localGH = leveldata.get_local_cctkGH(block);
-        block_kernel(leveldata.patch, leveldata.level, mfp.index(), block,
-                     localGH);
-      }
-    });
+    // Note: The amrex::MFIter uses global variables and OpenMP barriers
+    int block = 0;
+    const auto mfitinfo = amrex::MFItInfo().EnableTiling();
+    for (amrex::MFIter mfi(fab, mfitinfo); mfi.isValid(); ++mfi, ++block) {
+      const MFPointer mfp(mfi);
+      block_kernel(mfp.index(), block);
+    }
     break;
   }
 
@@ -785,21 +779,16 @@ void loop_over_blocks(
 
     std::vector<std::function<void()> > tasks;
 
-    active_levels.loop([&](const auto &restrict leveldata) {
-      // Note: The amrex::MFIter uses global variables and OpenMP barriers
-      int block = 0;
-      const auto mfitinfo = amrex::MFItInfo().EnableTiling();
-      for (amrex::MFIter mfi(*leveldata.fab, mfitinfo); mfi.isValid();
-           ++mfi, ++block) {
-        const MFPointer mfp(mfi);
-        auto task = [&block_kernel, &leveldata, mfp, block]() {
-          cGH *restrict const localGH = leveldata.get_local_cctkGH(block);
-          block_kernel(leveldata.patch, leveldata.level, mfp.index(), block,
-                       localGH);
-        };
-        tasks.push_back(std::move(task));
-      }
-    });
+    // Note: The amrex::MFIter uses global variables and OpenMP barriers
+    int block = 0;
+    const auto mfitinfo = amrex::MFItInfo().EnableTiling();
+    for (amrex::MFIter mfi(fab, mfitinfo); mfi.isValid(); ++mfi, ++block) {
+      const MFPointer mfp(mfi);
+      auto task = [&block_kernel, mfp, block]() {
+        block_kernel(mfp.index(), block);
+      };
+      tasks.push_back(std::move(task));
+    }
 
     // run all tasks
 #pragma omp parallel for schedule(dynamic)
@@ -814,35 +803,19 @@ void loop_over_blocks(
   case launch_method_t::cuda: {
     // CUDA
 
-    assert(CallFunction_count == -1);
-    CallFunction_count = 0;
-
-    active_levels.loop([&](const auto &restrict leveldata) {
-      // No OpenMP parallelization when using GPUs
-      int block = 0;
-      const auto mfitinfo =
-          amrex::MFItInfo().DisableDeviceSync().EnableTiling();
-      for (amrex::MFIter mfi(*leveldata.fab, mfitinfo); mfi.isValid();
-           ++mfi, ++block) {
-        const MFPointer mfp(mfi);
-        cGH *const localGH = leveldata.get_local_cctkGH(block);
-        block_kernel(leveldata.patch, leveldata.level, mfp.index(), block,
-                     localGH);
+    // No OpenMP parallelization when using GPUs
+    int block = 0;
+    const auto mfitinfo = amrex::MFItInfo().DisableDeviceSync().EnableTiling();
+    for (amrex::MFIter mfi(fab, mfitinfo); mfi.isValid(); ++mfi, ++block) {
+      const MFPointer mfp(mfi);
+      block_kernel(mfp.index(), block);
 #ifdef AMREX_USE_GPU
-        if (gpu_sync_after_every_kernel) {
-          amrex::Gpu::streamSynchronize();
-          AMREX_GPU_ERROR_CHECK();
-        }
-#endif
-        // TODO: `CallFunction_count` is the same as `block`. Get rid
-        // of `CallFunction_count`, and make `block` more easily
-        // accessible, e.g. as part of `cGH`.
-        ++CallFunction_count;
+      if (gpu_sync_after_every_kernel) {
+        amrex::Gpu::streamSynchronize();
+        AMREX_GPU_ERROR_CHECK();
       }
-    });
-
-    assert(CallFunction_count >= 0);
-    CallFunction_count = -1;
+#endif
+    }
 
     break;
   }
@@ -850,7 +823,24 @@ void loop_over_blocks(
   default:
     CCTK_ERROR("internal error");
   }
+}
 
+void loop_over_blocks(
+    const active_levels_t &active_levels,
+    const std::function<void(int patch, int level, int index, int block,
+                             const cGH *cctkGH)> &block_kernel) {
+  DECLARE_CCTK_PARAMETERS;
+
+  active_levels.loop([&](const auto &restrict leveldata) {
+    loop_over_blocks(*leveldata.fab, [&leveldata, &block_kernel](
+                                         const int index, const int block) {
+      cGH *restrict const localGH = leveldata.get_local_cctkGH(block);
+      block_kernel(leveldata.patch, leveldata.level, index, block, localGH);
+    });
+  });
+}
+
+void synchronize() {
 #ifdef AMREX_USE_GPU
   // TODO: Synchronize only if GPU kernels were actually launched
   // TODO: Switch to streamSynchronizeAll if AMReX is new enough
@@ -1597,21 +1587,30 @@ int Evolve(tFleshConfig *config) {
       active_levels = optional<active_levels_t>();
     } // for min_level
 
-    double cells = 0;
+    double ncells = 0;
     for (const auto &patch : ghext->patchdata)
       for (const auto &level : patch.leveldata)
-        cells += level.fab->boxArray().d_numPts();
-
-    const int updates = 1;                  // we processed one iteration
-    const int nodes = CCTK_nProcs(nullptr); // number of processes (or GPUs)
+        ncells += level.fab->boxArray().d_numPts();
+    const int updates = 1; // we processed one iteration
+    // const int nprocs = CCTK_nProcs(nullptr); // number of processes (or GPUs)
     const double end_time = gettime();
-    const double cell_updates_per_second =
-        cells * updates / (nodes * (end_time - start_time));
-    // This is the same as H-AMR's "cell updates per second":
-    CCTK_VINFO(
-        "Grid cells: %g   Grid cell updates per second (per process): %g",
-        cells, cell_updates_per_second);
+    const double iteration_time = end_time - start_time;
+    const double iterations_per_second = updates / iteration_time;
+    const double cell_updates_per_second = ncells * iterations_per_second;
+    CCTK_VINFO("Simulation time: %g   "
+               "Iterations per second: %g   "
+               "Simulation time per second: %g",
+               double(cctkGH->cctk_time), iterations_per_second,
+               double(cctkGH->cctk_delta_time * iterations_per_second)
 
+    );
+    // This is the same as H-AMR's "cell updates per second":
+    CCTK_VINFO("Grid cells: %g   "
+               "Grid cell updates per second: %g",
+               // "Grid cell updates per second per process: %g"
+               ncells, cell_updates_per_second
+               // cell_updates_per_second / nprocs
+    );
   } // main loop
 
   return 0;
@@ -1818,6 +1817,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
       update_cctkGH(const_cast<cGH *>(local_cctkGH), cctkGH);
       CCTK_CallFunction(function, attribute, const_cast<cGH *>(local_cctkGH));
     });
+    synchronize();
     break;
 
   case mode_t::meta:

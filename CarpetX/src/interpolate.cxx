@@ -1,7 +1,10 @@
 #include "driver.hxx"
 #include "interp.hxx"
+#include "mpi_types.hxx"
 #include "reduction.hxx"
 #include "schedule.hxx"
+
+#include <defs.hxx>
 
 #include <cctk.h>
 #include <cctk_Arguments.h>
@@ -23,6 +26,8 @@
 
 namespace CarpetX {
 using namespace std;
+
+using Arith::pown;
 
 namespace {
 
@@ -89,14 +94,14 @@ template <typename T, int order> struct interpolator {
       const T y2 = interpolate<dir - 1>(i + 2 * DI, di);
       switch (derivs[dir]) {
       case 0:
-        return (-1 / T(2) * x + 1 / T(2) * pow(x, 2)) * y0 +
-               (1 - pow(x, 2)) * y1 +
-               (1 / T(2) * x + 1 / T(2) * pow(x, 2)) * y2;
+        return (-1 / T(2) * x + 1 / T(2) * pown(x, 2)) * y0 +
+               (1 - pown(x, 2)) * y1 +
+               (1 / T(2) * x + 1 / T(2) * pown(x, 2)) * y2;
       case 1:
         return ((-1 / T(2) + x) * y0 - 2 * x * y1 + (1 / T(2) + x) * y2) /
                dx[dir];
       case 2:
-        return (y0 - 2 * y1 + y2) / pow(dx[dir], 2);
+        return (y0 - 2 * y1 + y2) / pown(dx[dir], 2);
       }
     }
     case 3: {
@@ -110,28 +115,28 @@ template <typename T, int order> struct interpolator {
       const T y3 = interpolate<dir - 1>(i + 3 * DI, di);
       switch (derivs[dir]) {
       case 0:
-        return (-1 / T(16) + 1 / T(24) * x + 1 / T(4) * pow(x, 2) -
-                1 / T(6) * pow(x, 3)) *
+        return (-1 / T(16) + 1 / T(24) * x + 1 / T(4) * pown(x, 2) -
+                1 / T(6) * pown(x, 3)) *
                    y0 +
-               (9 / T(16) - 9 / T(8) * x - 1 / T(4) * pow(x, 2) +
-                1 / T(2) * pow(x, 3)) *
+               (9 / T(16) - 9 / T(8) * x - 1 / T(4) * pown(x, 2) +
+                1 / T(2) * pown(x, 3)) *
                    y1 +
-               (9 / T(16) + 9 / T(8) * x - 1 / T(4) * pow(x, 2) -
-                1 / T(2) * pow(x, 3)) *
+               (9 / T(16) + 9 / T(8) * x - 1 / T(4) * pown(x, 2) -
+                1 / T(2) * pown(x, 3)) *
                    y2 +
-               (-1 / T(16) - 1 / T(24) * x + 1 / T(4) * pow(x, 2) +
-                1 / T(6) * pow(x, 3)) *
+               (-1 / T(16) - 1 / T(24) * x + 1 / T(4) * pown(x, 2) +
+                1 / T(6) * pown(x, 3)) *
                    y3;
       case 1:
-        return ((1 / T(24) + 1 / T(2) * x - 1 / T(2) * pow(x, 2)) * y0 +
-                (-9 / T(8) - 1 / T(2) * x + 3 / T(2) * pow(x, 2)) * y1 +
-                (9 / T(8) - 1 / T(2) * x - 3 / T(2) * pow(x, 2)) * y2 +
-                (-1 / T(24) + 1 / T(2) * x + 1 / T(2) * pow(x, 2)) * y3) /
+        return ((1 / T(24) + 1 / T(2) * x - 1 / T(2) * pown(x, 2)) * y0 +
+                (-9 / T(8) - 1 / T(2) * x + 3 / T(2) * pown(x, 2)) * y1 +
+                (9 / T(8) - 1 / T(2) * x - 3 / T(2) * pown(x, 2)) * y2 +
+                (-1 / T(24) + 1 / T(2) * x + 1 / T(2) * pown(x, 2)) * y3) /
                dx[dir];
       case 2:
         return ((1 / T(2) - x) * y0 + (-1 / T(2) + 3 * x) * y1 +
                 (-1 / T(2) - 3 * x) * y2 + (1 / T(2) + x) * y3) /
-               pow(dx[dir], 2);
+               pown(dx[dir], 2);
       }
     }
     case 4: {
@@ -146,41 +151,41 @@ template <typename T, int order> struct interpolator {
       const T y4 = interpolate<dir - 1>(i + 4 * DI, di);
       switch (derivs[dir]) {
       case 0:
-        return (1 / T(12) * x - 1 / T(24) * pow(x, 2) - 1 / T(12) * pow(x, 3) +
-                1 / T(24) * pow(x, 4)) *
+        return (1 / T(12) * x - 1 / T(24) * pown(x, 2) -
+                1 / T(12) * pown(x, 3) + 1 / T(24) * pown(x, 4)) *
                    y0 +
-               (-2 / T(3) * x + 2 / T(3) * pow(x, 2) + 1 / T(6) * pow(x, 3) -
-                1 / T(6) * pow(x, 4)) *
+               (-2 / T(3) * x + 2 / T(3) * pown(x, 2) + 1 / T(6) * pown(x, 3) -
+                1 / T(6) * pown(x, 4)) *
                    y1 +
-               (1 - 5 / T(4) * pow(x, 2) + 1 / T(4) * pow(x, 4)) * y2 +
-               (2 / T(3) * x + 2 / T(3) * pow(x, 2) - 1 / T(6) * pow(x, 3) -
-                1 / T(6) * pow(x, 4)) *
+               (1 - 5 / T(4) * pown(x, 2) + 1 / T(4) * pown(x, 4)) * y2 +
+               (2 / T(3) * x + 2 / T(3) * pown(x, 2) - 1 / T(6) * pown(x, 3) -
+                1 / T(6) * pown(x, 4)) *
                    y3 +
-               (-1 / T(12) * x - 1 / T(24) * pow(x, 2) + 1 / T(12) * pow(x, 3) +
-                1 / T(24) * pow(x, 4)) *
+               (-1 / T(12) * x - 1 / T(24) * pown(x, 2) +
+                1 / T(12) * pown(x, 3) + 1 / T(24) * pown(x, 4)) *
                    y4;
       case 1:
-        return ((1 / T(12) - 1 / T(12) * x - 1 / T(4) * pow(x, 2) +
-                 1 / T(6) * pow(x, 3)) *
+        return ((1 / T(12) - 1 / T(12) * x - 1 / T(4) * pown(x, 2) +
+                 1 / T(6) * pown(x, 3)) *
                     y0 +
-                (-2 / T(3) + 4 / T(3) * x + 1 / T(2) * pow(x, 2) -
-                 2 / T(3) * pow(x, 3)) *
+                (-2 / T(3) + 4 / T(3) * x + 1 / T(2) * pown(x, 2) -
+                 2 / T(3) * pown(x, 3)) *
                     y1 +
-                (-5 / T(2) * x + pow(x, 3)) * y2 +
-                (2 / T(3) + 4 / T(3) * x - 1 / T(2) * pow(x, 2) -
-                 2 / T(3) * pow(x, 3)) *
+                (-5 / T(2) * x + pown(x, 3)) * y2 +
+                (2 / T(3) + 4 / T(3) * x - 1 / T(2) * pown(x, 2) -
+                 2 / T(3) * pown(x, 3)) *
                     y3 +
-                (-1 / T(12) - 1 / T(12) * x + 1 / T(4) * pow(x, 2) +
-                 1 / T(6) * pow(x, 3)) *
+                (-1 / T(12) - 1 / T(12) * x + 1 / T(4) * pown(x, 2) +
+                 1 / T(6) * pown(x, 3)) *
                     y4) /
                dx[dir];
       case 2:
-        return ((-1 / T(12) - 1 / T(2) * x + 1 / T(2) * pow(x, 2)) * y0 +
-                (4 / T(3) + x - 2 * pow(x, 2)) * y1 +
-                (-5 / T(2) + 3 * pow(x, 2)) * y2 +
-                (4 / T(3) - x - 2 * pow(x, 2)) * y3 +
-                (-1 / T(12) + 1 / T(2) * x + 1 / T(2) * pow(x, 2)) * y4) /
-               pow(dx[dir], 2);
+        return ((-1 / T(12) - 1 / T(2) * x + 1 / T(2) * pown(x, 2)) * y0 +
+                (4 / T(3) + x - 2 * pown(x, 2)) * y1 +
+                (-5 / T(2) + 3 * pown(x, 2)) * y2 +
+                (4 / T(3) - x - 2 * pown(x, 2)) * y3 +
+                (-1 / T(12) + 1 / T(2) * x + 1 / T(2) * pown(x, 2)) * y4) /
+               pown(dx[dir], 2);
       }
     }
     default:
@@ -312,6 +317,27 @@ extern "C" void CarpetX_Interpolate(const CCTK_POINTER_TO_CONST cctkGH_,
       localsx[n] = coordsx[n];
       localsy[n] = coordsy[n];
       localsz[n] = coordsz[n];
+    }
+  }
+
+  // Apply symmetries to coordinates
+  std::vector<bool> symmetry_reflected_z;
+  assert(!reflection_x);
+  assert(!reflection_y);
+  assert(!reflection_upper_x);
+  assert(!reflection_upper_y);
+  assert(!reflection_upper_z);
+  if (reflection_z) {
+    symmetry_reflected_z.resize(npoints);
+    assert(ghext->num_patches() == 1);
+    constexpr int patch = 0;
+    const amrex::Geometry &geom = ghext->patchdata.at(patch).amrcore->Geom(0);
+    const CCTK_REAL *restrict const xmin = geom.ProbLo();
+    for (int n = 0; n < npoints; ++n) {
+      const bool refl = localsz[n] < xmin[2];
+      symmetry_reflected_z[n] = refl;
+      if (refl)
+        localsz[n] = 2 * xmin[2] - localsz[n];
     }
   }
 
@@ -562,6 +588,7 @@ extern "C" void CarpetX_Interpolate(const CCTK_POINTER_TO_CONST cctkGH_,
   //   CCTK_VINFO("[%d] recvdispl=%d recvcount=%d", p, recvdispls.at(p),
   //              recvcounts.at(p));
   // CCTK_VINFO("recvcount=%d", recvcount);
+  // If this fails then there might be particles out of bounds
   assert(recvcount == (nvars + 1) * npoints);
   vector<CCTK_REAL> sendbuf(sendcount);
   for (const auto &proc_result : results) {
@@ -594,6 +621,29 @@ extern "C" void CarpetX_Interpolate(const CCTK_POINTER_TO_CONST cctkGH_,
     const int idx = int(recvbuf.at(offset));
     for (int v = 0; v < nvars; ++v)
       resultptrs[v][idx] = recvbuf.at(offset + 1 + v);
+  }
+
+  // Apply symmetries to interpolated values
+  assert(!reflection_x);
+  assert(!reflection_y);
+  assert(!reflection_upper_x);
+  assert(!reflection_upper_y);
+  assert(!reflection_upper_z);
+  if (reflection_z) {
+    // The code below is only valid for Psi4
+    assert(nvars == 2);
+    assert(varinds[0] == CCTK_VarIndex("Weyl::Psi4re"));
+    assert(varinds[1] == CCTK_VarIndex("Weyl::Psi4im"));
+    // l^a = et^a + er^a
+    // n^a = et^a - er^a
+    // m^a = etheta^a + i ephi^a
+    // Psi4 = C_abcd m-bar^b n^b m-bar^c n^d
+    for (int n = 0; n < npoints; ++n) {
+      if (symmetry_reflected_z[n]) {
+        resultptrs[0][n] = -resultptrs[0][n];
+        resultptrs[1][n] = +resultptrs[1][n];
+      }
+    }
   }
 
 #endif

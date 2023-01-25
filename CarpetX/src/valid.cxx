@@ -78,7 +78,11 @@ void warn_if_invalid(const GHExt::GlobalData::ArrayGroupData &groupdata, int vi,
 
 // Poison values to catch uninitialized variables
 
+#if defined CCTK_REAL_PRECISION_4
+constexpr std::uint32_t ipoison = 0xffc00000UL + 0xdead;
+#elif defined CCTK_REAL_PRECISION_8
 constexpr std::uint64_t ipoison = 0xfff8000000000000ULL + 0xdeadbeef;
+#endif
 static_assert(sizeof ipoison == sizeof(CCTK_REAL), "");
 
 // Poison grid functions
@@ -132,6 +136,7 @@ void poison_invalid(const GHExt::PatchData::LevelData &leveldata,
                 CCTK_ATTRIBUTE_ALWAYS_INLINE { gf(p.I) = poison; });
     }
   });
+  synchronize();
 }
 
 // Ensure grid functions are not poisoned
@@ -226,6 +231,7 @@ void check_valid(const GHExt::PatchData::LevelData &leveldata,
             [&](const Loop::PointDesc &p) { nan_count_update(grid, gf, p); });
     }
   });
+  synchronize();
 
   if (CCTK_BUILTIN_EXPECT(nan_count > 0, false)) {
 #pragma omp critical
@@ -284,18 +290,19 @@ void check_valid(const GHExt::PatchData::LevelData &leveldata,
                   infos.push_back(info_t{where_t::interior, p.I, p.X, gf(p.I)});
               });
       });
+      synchronize();
 
       std::sort(infos.begin(), infos.end(),
                 [](const info_t &a, const info_t &b) {
                   const std::less<vect<int, dim> > lt;
-                  return lt(a.I, b.I);
+                  return lt(reversed(a.I), reversed(b.I));
                 });
 
       std::ostringstream buf;
       buf << setprecision(std::numeric_limits<CCTK_REAL>::digits10 + 1);
       for (const auto &info : infos)
-        buf << info.where << " " << info.I << " " << info.X << " " << info.val
-            << "\n";
+        buf << "\n"
+            << info.where << " " << info.I << " " << info.X << " " << info.val;
       CCTK_VWARN(CCTK_WARN_ALERT, buf.str().c_str());
 
       CCTK_VERROR("%s: Grid function \"%s\" contains nans, infinities, or "

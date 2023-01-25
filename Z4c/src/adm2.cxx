@@ -87,11 +87,12 @@ extern "C" void Z4c_ADM2(CCTK_ARGUMENTS) {
 
   //
 
-  const int ntmps = 154;
-  GF3D5vector<CCTK_REAL> tmps(layout0, ntmps);
-  int itmp = 0;
+  constexpr int nvars = 154;
+  GF3D5vector<CCTK_REAL> vars(layout0, nvars);
 
-  const auto make_gf = [&]() { return GF3D5<CCTK_REAL>(tmps(itmp++)); };
+  int ivar = 0;
+
+  const auto make_gf = [&]() { return GF3D5<CCTK_REAL>(vars(ivar++)); };
   const auto make_vec = [&](const auto &f) {
     return vec<result_of_t<decltype(f)()>, 3>([&](int) { return f(); });
   };
@@ -143,10 +144,10 @@ extern "C" void Z4c_ADM2(CCTK_ARGUMENTS) {
   const vec<smat<GF3D5<CCTK_REAL>, 3>, 3> gf_ddbetaG0(make_vec_mat_gf());
   calc_derivs2(cctkGH, gf_betaG1, gf_betaG0, gf_dbetaG0, gf_ddbetaG0, layout0);
 
-  if (itmp != ntmps)
-    CCTK_VERROR("Wrong number of temporary variables: ntmps=%d itmp=%d", ntmps,
-                itmp);
-  itmp = -1;
+  if (ivar != nvars)
+    CCTK_VERROR("Wrong number of temporary variables: nvars=%d ivar=%d", nvars,
+                ivar);
+  ivar = -1;
 
   //
 
@@ -197,14 +198,14 @@ extern "C" void Z4c_ADM2(CCTK_ARGUMENTS) {
         // load and calculate
         const z4c_vars<vreal> vars(
             set_Theta_zero, kappa1, kappa2, f_mu_L, f_mu_S, eta, //
-            gf_chi0(mask, index0, 1), gf_dchi0(mask, index0),
+            gf_chi0(mask, index0), gf_dchi0(mask, index0),
             gf_ddchi0(mask, index0), //
-            gf_gammat0(mask, index0, one<smat<int, 3> >()()),
-            gf_dgammat0(mask, index0), gf_ddgammat0(mask, index0), //
-            gf_Kh0(mask, index0), gf_dKh0(mask, index0),           //
-            gf_At0(mask, index0), gf_dAt0(mask, index0),           //
-            gf_Gamt0(mask, index0), gf_dGamt0(mask, index0),       //
-            gf_Theta0(mask, index0), gf_dTheta0(mask, index0),     //
+            gf_gammat0(mask, index0), gf_dgammat0(mask, index0),
+            gf_ddgammat0(mask, index0),                        //
+            gf_Kh0(mask, index0), gf_dKh0(mask, index0),       //
+            gf_At0(mask, index0), gf_dAt0(mask, index0),       //
+            gf_Gamt0(mask, index0), gf_dGamt0(mask, index0),   //
+            gf_Theta0(mask, index0), gf_dTheta0(mask, index0), //
             gf_alphaG0(mask, index0), gf_dalphaG0(mask, index0),
             gf_ddalphaG0(mask, index0), //
             gf_betaG0(mask, index0), gf_dbetaG0(mask, index0),
