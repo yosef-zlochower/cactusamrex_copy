@@ -10,6 +10,7 @@ ActiveThorns = "
     HydroInitial
     TmunuBase
     AsterX
+    EOSX
 "
  
 $nlevels = 1
@@ -64,8 +65,14 @@ CarpetX::dtfac = 0.25
 HydroBase::initial_hydro = "balsara1"
 HydroInitial::gamma = 2.0
 AsterX::gamma = 2.0
-AsterX::reconstruction_method = "ppm"
+AsterX::reconstruction_method = "minmod"
+AsterX::flux_type = "lxf"
+AsterX::c2p_tol = 1e-8
 AsterX::max_iter = 100
+AsterX::debug_mode = "yes"
+Con2PrimFactory::unit_test = "yes"
+
+EOSX::evol_eos_name = "IdealGas"
 
 ODESolvers::method = "RK4"
 

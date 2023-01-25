@@ -106,11 +106,11 @@ SCHEDULE AsterX_Con2Prim IN ODESolvers_RHS BEFORE AsterX_EstimateError
   WRITES: con2prim_flag(interior)
   WRITES: HydroBase::rho(interior) HydroBase::vel(interior) HydroBase::eps(interior) HydroBase::press(interior) HydroBase::Bvec(interior)
   WRITES: saved_prims(interior)
-  WRITES: dens(interior) tau(interior) mom(interior)
+  WRITES: dens(interior) tau(interior) mom(interior) dB(interior)
   SYNC: con2prim_flag
   SYNC: HydroBase::rho HydroBase::vel HydroBase::eps HydroBase::press HydroBase::Bvec
   SYNC: saved_prims
-  SYNC: dens tau mom
+  SYNC: dens tau mom dB
 } "Calculate primitive variables from conservative variables"
 
 if (interpolate_failed_c2p)

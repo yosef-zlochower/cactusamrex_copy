@@ -12,18 +12,23 @@
 
 #include "utils.hxx"
 #include "reconstruct.hxx"
+#include <eos.hxx>
+#include <eos_idealgas.hxx>
 
 namespace AsterX {
 using namespace std;
 using namespace Loop;
 using namespace Arith;
+using namespace EOSX;
 
 enum class flux_t { LxF, HLLE };
+enum class eos_t { IdealGas, Hybrid, Tabulated };
 
 // Calculate the fluxes in direction `dir`. This function is more
 // complex because it has to handle any direction, but as reward,
 // there is only one function, not three.
-template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
+template <int dir, typename EOSType>
+void CalcFlux(CCTK_ARGUMENTS, EOSType &eos_th) {
   DECLARE_CCTK_ARGUMENTSX_AsterX_Fluxes;
   DECLARE_CCTK_PARAMETERS;
 
@@ -264,14 +269,21 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
         // Currently, computing press for classical ideal gas from reconstructed
         // vars
 
+	// TODO: Correctly reconstruct Ye
+        const vec<CCTK_REAL, 2> ye_rc{ye_min, ye_max};
+
         // Ideal gas case {
         /* pressure for ideal gas EOS */
         const vec<CCTK_REAL, 2> press_rc([&](int f) ARITH_INLINE {
-          return eps_rc(f) * rho_rc(f) * (gamma - 1);
+          return eos_th.press_from_valid_rho_eps_ye(rho_rc(f), eps_rc(f),
+                                                    ye_rc(f));
         });
-        /* cs2 for ideal gas EOS */
-        const vec<CCTK_REAL, 2> cs2_rc([&](int f) ARITH_INLINE {
-          return (gamma - 1) * eps_rc(f) / (eps_rc(f) + 1 / gamma);
+	/* cs2 for ideal gas EOS */
+	const vec<CCTK_REAL, 2> cs2_rc([&](int f) ARITH_INLINE {
+          return eos_th.csnd_from_valid_rho_eps_ye(rho_rc(f), eps_rc(f),
+                                                   ye_rc(f)) *
+                 eos_th.csnd_from_valid_rho_eps_ye(rho_rc(f), eps_rc(f),
+                                                   ye_rc(f));
         });
         /* enthalpy h for ideal gas EOS */
         const vec<CCTK_REAL, 2> h_rc([&](int f) ARITH_INLINE {
@@ -410,9 +422,39 @@ extern "C" void AsterX_Fluxes(CCTK_ARGUMENTS) {
   DECLARE_CCTK_ARGUMENTS_AsterX_Fluxes;
   DECLARE_CCTK_PARAMETERS;
 
-  CalcFlux<0>(cctkGH);
-  CalcFlux<1>(cctkGH);
-  CalcFlux<2>(cctkGH);
+  eos_t eostype;
+  eos::range rgeps(eps_min, eps_max), rgrho(rho_min, rho_max),
+      rgye(ye_min, ye_max);
+
+  if (CCTK_EQUALS(evolution_eos, "IdealGas")) {
+    eostype = eos_t::IdealGas;
+  } else if (CCTK_EQUALS(evolution_eos, "Hybrid")) {
+    eostype = eos_t::Hybrid;
+  } else if (CCTK_EQUALS(evolution_eos, "Tabulated")) {
+    eostype = eos_t::Tabulated;
+  } else {
+    CCTK_ERROR("Unknown value for parameter \"evolution_eos\"");
+  }
+
+  switch (eostype) {
+  case eos_t::IdealGas: {
+    eos_idealgas eos_th(gl_gamma, particle_mass, rgeps, rgrho, rgye);
+    CalcFlux<0>(cctkGH, eos_th);
+    CalcFlux<1>(cctkGH, eos_th);
+    CalcFlux<2>(cctkGH, eos_th);
+    break;
+  }
+  case eos_t::Hybrid: {
+    CCTK_ERROR("Hybrid EOS is not yet supported");
+    break;
+  }
+  case eos_t::Tabulated: {
+    CCTK_ERROR("Tabulated EOS is not yet supported");
+    break;
+  }
+  default:
+    assert(0);
+  }
 
   /* Set auxiliary variables for the rhs of A and Psi  */
   CalcAuxForAvecPsi(cctkGH);
