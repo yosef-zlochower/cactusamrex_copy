@@ -348,16 +348,10 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
             return alp_avg * vels_rc_face(i)(f) - betas_avg(i);
           });
         });
-<<<<<<< HEAD
 
         // Lorentz factor
         const vec<CCTK_REAL, 2> w_lorentz_rc_face([&](int f) ARITH_INLINE {
           return 1 / sqrt(1 - calc_contraction(vlows_rc_face, vels_rc_face)(f));
-=======
-        /* Lorentz factor: W = 1 / sqrt(1 - v^2) */
-        const vec<CCTK_REAL, 2> w_lorentz_rc([&](int f) ARITH_INLINE {
-          return 1 / sqrt(1 - calc_contraction(vlows_rc, vels_rc)(f));
->>>>>>> master
         });
 
         // alpha * b0 = W * B^i * v_i
@@ -397,7 +391,6 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
         const vec<CCTK_REAL, 2> press_rc_face([&](int f) ARITH_INLINE {
           return eps_rc_face(f) * rho_rc_face(f) * (gamma - 1.0);
         });
-<<<<<<< HEAD
 
         // Sound speed squared (ideal gas EOS )
         // TODO: compute this from a user-specified EOS
@@ -409,15 +402,6 @@ template <int dir> void CalcFlux(CCTK_ARGUMENTS) {
         // TODO: compute this from a user-specified EOS
         const vec<CCTK_REAL, 2> h_rc_face([&](int f) ARITH_INLINE {
           return 1 + eps_rc_face(f) + press_rc_face(f) / rho_rc_face(f);
-=======
-        /* cs2 for ideal gas EOS */
-        const vec<CCTK_REAL, 2> cs2_rc([&](int f) ARITH_INLINE {
-          return (gamma - 1) * eps_rc(f) / (eps_rc(f) + 1 / gamma);
-        });
-        /* enthalpy h for ideal gas EOS */
-        const vec<CCTK_REAL, 2> h_rc([&](int f) ARITH_INLINE {
-          return 1 + eps_rc(f) + press_rc(f) / rho_rc(f);
->>>>>>> master
         });
 
 
