@@ -111,6 +111,12 @@ public:
 // Cactus grid hierarchy extension
 struct GHExt {
 
+  GHExt() = default;
+  GHExt(const GHExt &) = delete;
+  GHExt(GHExt &&) = delete;
+  GHExt &operator=(const GHExt &) = delete;
+  GHExt &operator=(GHExt &&) = delete;
+
   struct cctkGHptr {
     cGH *cctkGH;
     cctkGHptr(const cctkGHptr &) = delete;
@@ -265,9 +271,6 @@ struct GHExt {
 
         // Apply outer (physical) boundary conditions to a MultiFab
         void apply_boundary_conditions(amrex::MultiFab &mfab) const;
-        // Apply outer (physical) boundary conditions to an FArrayBox
-        void apply_boundary_conditions(int block, const amrex::Box &box,
-                                       amrex::FArrayBox &dest) const;
 
         // To interpolate boundaries from other patches:
         struct interp_t {
