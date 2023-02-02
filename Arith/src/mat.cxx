@@ -21,7 +21,9 @@ constexpr bool eqm(const gmat<T, D, symm> &x, const gmat<T, D, symm> &y) {
 // compile time. If this function compiles, the tests pass.
 void TestMat() {
   // nvcc V11.1.74 doesn't accept this as "constexpr" values
-#ifndef __CUDACC__
+  // clang in HIP mode does not have constexpr for isnan
+  // https://sep5.readthedocs.io/en/latest/Programming_Guides/HIP-porting-guide.html
+#if(!defined(__CUDACC__) && !defined(__clang__))
   using M3D = smat<CCTK_REAL, 3>;
 
   constexpr CCTK_REAL N = nan<CCTK_REAL>();
