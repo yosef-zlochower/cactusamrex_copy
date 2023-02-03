@@ -969,6 +969,10 @@ vector<clause_t> decode_clauses(const cFunctionData *restrict attribute,
     int vi = RDWR.varindex - CCTK_FirstVarIndexI(gi);
     assert(vi >= 0 && vi < CCTK_NumVarsInGroupI(gi));
     int tl = RDWR.timelevel;
+    if(rdwr == rdwr_t::read && RDWR.where_rd == 0)
+        continue;
+    if(rdwr == rdwr_t::write && RDWR.where_wr == 0)
+        continue;
     int where;
     switch (rdwr) {
     case rdwr_t::read:
@@ -1890,7 +1894,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
                                                   ? nan_handling_t::forbid_nans
                                                   : nan_handling_t::allow_nans;
           const valid_t &provided = wr.valid;
-          groupdata.valid.at(wr.tl).at(wr.vi).set_or(
+          groupdata.valid.at(wr.tl).at(wr.vi).set(
               provided,
               [iteration = cctkGH->cctk_iteration, where = attribute->where,
                thorn = attribute->thorn, routine = attribute->routine] {
