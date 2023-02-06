@@ -973,6 +973,8 @@ vector<clause_t> decode_clauses(const cFunctionData *restrict attribute,
         continue;
     if(rdwr == rdwr_t::write && RDWR.where_wr == 0)
         continue;
+    if(rdwr == rdwr_t::invalid && RDWR.where_inv == 0)
+        continue;
     int where;
     switch (rdwr) {
     case rdwr_t::read:
@@ -1793,7 +1795,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
         active_levels->loop([&](auto &restrict leveldata) {
           auto &restrict groupdata = *leveldata.groupdata.at(wr.gi);
           const valid_t &provided = wr.valid;
-          groupdata.valid.at(wr.tl).at(wr.vi).set_and(
+          groupdata.valid.at(wr.tl).at(wr.vi).set(
               need | ~provided,
               [iteration = cctkGH->cctk_iteration, where = attribute->where,
                thorn = attribute->thorn, routine = attribute->routine] {
@@ -1809,7 +1811,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
         auto &restrict arraygroupdata =
             *ghext->globaldata.arraygroupdata.at(wr.gi);
         const valid_t &provided = wr.valid;
-        arraygroupdata.valid.at(wr.tl).at(wr.vi).set_and(
+        arraygroupdata.valid.at(wr.tl).at(wr.vi).set(
             need | ~provided,
             [iteration = cctkGH->cctk_iteration, where = attribute->where,
              thorn = attribute->thorn, routine = attribute->routine] {
@@ -1904,6 +1906,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
                     << ": Mark output variables as valid";
                 return buf.str();
               });
+          std::cout << ">> mark write " << groupdata.full_name(wr.vi) << " -> " << groupdata.valid.at(wr.tl).at(wr.vi).get() << std::endl;
           check_valid(leveldata, groupdata, wr.vi, wr.tl, nan_handling, [&]() {
             ostringstream buf;
             buf << "CallFunction iteration " << cctkGH->cctk_iteration << " "
@@ -1919,7 +1922,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
                                                 ? nan_handling_t::forbid_nans
                                                 : nan_handling_t::allow_nans;
         const valid_t &provided = wr.valid;
-        arraygroupdata.valid.at(wr.tl).at(wr.vi).set_or(
+        arraygroupdata.valid.at(wr.tl).at(wr.vi).set(
             provided,
             [iteration = cctkGH->cctk_iteration, where = attribute->where,
              thorn = attribute->thorn, routine = attribute->routine] {
@@ -1953,7 +1956,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
                                                   ? nan_handling_t::forbid_nans
                                                   : nan_handling_t::allow_nans;
           const valid_t &provided = inv.valid;
-          groupdata.valid.at(inv.tl).at(inv.vi).set_and(
+          groupdata.valid.at(inv.tl).at(inv.vi).set(
               ~provided,
               [iteration = cctkGH->cctk_iteration, where = attribute->where,
                thorn = attribute->thorn, routine = attribute->routine] {
@@ -1963,6 +1966,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
                     << ": Mark invalid variables as invalid";
                 return buf.str();
               });
+          std::cout << ">> mark invalid " << groupdata.full_name(inv.vi) << " -> " << groupdata.valid.at(inv.tl).at(inv.vi).get() << std::endl;
           check_valid(
               leveldata, groupdata, inv.vi, inv.tl, nan_handling, [&]() {
                 ostringstream buf;
@@ -1979,7 +1983,7 @@ int CallFunction(void *function, cFunctionData *restrict attribute,
                                                 ? nan_handling_t::forbid_nans
                                                 : nan_handling_t::allow_nans;
         const valid_t &provided = inv.valid;
-        arraygroupdata.valid.at(inv.tl).at(inv.vi).set_and(
+        arraygroupdata.valid.at(inv.tl).at(inv.vi).set(
             ~provided,
             [iteration = cctkGH->cctk_iteration, where = attribute->where,
              thorn = attribute->thorn, routine = attribute->routine] {
@@ -2085,7 +2089,7 @@ int SyncGroupsByDirI(const cGH *restrict cctkGH, int numgroups,
             error_if_invalid(groupdata, vi, tl, make_valid_int(), []() {
               return "SyncGroupsByDirI before syncing";
             });
-            groupdata.valid.at(tl).at(vi).set_and(~make_valid_ghosts(), []() {
+            groupdata.valid.at(tl).at(vi).set(~make_valid_ghosts(), []() {
               return "SyncGroupsByDirI before syncing: "
                      "Mark ghost zones as invalid";
             });

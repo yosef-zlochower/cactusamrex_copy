@@ -660,6 +660,17 @@ extern "C" void ODESolvers_Solve(CCTK_ARGUMENTS) {
     // Add scaled RHS to state vector
     statecomp_t::lincomb(var, 1, make_array(dt), make_array(&rhs),
                          make_valid_int());
+    int tl = 0;
+    for(int i = 0; i < var.groupdatas.size(); i++) {
+        auto& g_var = *var.groupdatas.at(i);
+        auto& g_rhs = *rhs.groupdatas.at(i);
+        for(size_t vi = 0; vi < g_var.numvars; vi++) {
+            auto& v_var = g_var.valid.at(vi).at(0);
+            auto& v_rhs = g_rhs.valid.at(vi).at(0);
+            v_var.set( v_rhs.get() & v_var.get(), [](){ return "RHS";} );
+        }
+        std::cout << ">> Euler: " << g_var.groupname << " -> " << g_var.valid.at(0).at(0).get() << std::endl;
+    }
     mark_invalid(dep_groups);
 
   } else if (CCTK_EQUALS(method, "RK2")) {
