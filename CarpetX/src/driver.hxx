@@ -145,13 +145,6 @@ struct GHExt {
 
     vector<vector<why_valid_t> > valid; // [time level][var index]
 
-    std::string full_name(int vi) const {
-      const char *c_ptr = CCTK_FullName( firstvarindex + vi );
-      std::string name(c_ptr);
-      free( (void*) c_ptr );
-      return name;
-    }
-
     // TODO: add poison_invalid and check_valid functions
 
     friend YAML::Emitter &operator<<(YAML::Emitter &yaml,

@@ -29,7 +29,6 @@ void error_if_invalid(const GHExt::PatchData::LevelData::GroupData &groupdata,
                       int vi, int tl, const valid_t &required,
                       const function<string()> &msg) {
   const valid_t &have = groupdata.valid.at(tl).at(vi).get();
-  std::cout << ">> check: " << groupdata.groupname << " has=" << have << " needs=" << required << std::endl;
   if (CCTK_BUILTIN_EXPECT((required & ~have).valid_any(), false))
     CCTK_VERROR("%s: Grid function \"%s\" is invalid on patch %d, refinement "
                 "level %d, time level %d; required %s, found %s",
@@ -55,7 +54,6 @@ void error_if_invalid(const GHExt::GlobalData::ArrayGroupData &groupdata,
                       int vi, int tl, const valid_t &required,
                       const function<string()> &msg) {
   const valid_t &have = groupdata.valid.at(tl).at(vi).get();
-  std::cout << ">> check: " << groupdata.groupname << " has=" << have << " needs=" << required << std::endl;
   if (CCTK_BUILTIN_EXPECT((required & ~have).valid_any(), false))
     CCTK_VERROR("%s: Array \"%s\" is invalid on time level %d; "
                 "required %s, found %s",

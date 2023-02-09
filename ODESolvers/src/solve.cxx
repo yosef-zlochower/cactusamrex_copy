@@ -218,10 +218,29 @@ statecomp_t statecomp_t::copy(const valid_t where) const {
 }
 
 template <size_t N>
+void update_valid(const statecomp_t &var, const array<const statecomp_t *, N> &rhs_n) {
+    int tl = 0;
+    for(const statecomp_t *rhs : rhs_n) {
+        for(int i = 0; i < var.groupdatas.size(); i++) {
+            auto& g_var = *var.groupdatas.at(i);
+            auto& g_rhs = *rhs->groupdatas.at(i);
+            for(size_t vi = 0; vi < g_var.numvars; vi++) {
+                auto& v_var = g_var.valid.at(vi).at(0);
+                auto& v_rhs = g_rhs.valid.at(vi).at(0);
+                v_var.set( v_rhs.get() & v_var.get(), [](){ return "RHS";} );
+            }
+            std::cout << ">> Update Valid: " << g_var.groupname << " -> " << g_var.valid.at(0).at(0).get() << std::endl;
+        }
+    }
+}
+
+// lincomb implementation
+template <size_t N>
 void statecomp_t::lincomb(const statecomp_t &dst, const CCTK_REAL scale,
                           const array<CCTK_REAL, N> &factors,
                           const array<const statecomp_t *, N> &srcs,
                           const valid_t where) {
+  update_valid<N>(dst, srcs);
   const size_t size = dst.mfabs.size();
   for (size_t n = 0; n < N; ++n)
     assert(srcs[n]->mfabs.size() == size);
@@ -660,17 +679,6 @@ extern "C" void ODESolvers_Solve(CCTK_ARGUMENTS) {
     // Add scaled RHS to state vector
     statecomp_t::lincomb(var, 1, make_array(dt), make_array(&rhs),
                          make_valid_int());
-    int tl = 0;
-    for(int i = 0; i < var.groupdatas.size(); i++) {
-        auto& g_var = *var.groupdatas.at(i);
-        auto& g_rhs = *rhs.groupdatas.at(i);
-        for(size_t vi = 0; vi < g_var.numvars; vi++) {
-            auto& v_var = g_var.valid.at(vi).at(0);
-            auto& v_rhs = g_rhs.valid.at(vi).at(0);
-            v_var.set( v_rhs.get() & v_var.get(), [](){ return "RHS";} );
-        }
-        std::cout << ">> Euler: " << g_var.groupname << " -> " << g_var.valid.at(0).at(0).get() << std::endl;
-    }
     mark_invalid(dep_groups);
 
   } else if (CCTK_EQUALS(method, "RK2")) {
