@@ -969,12 +969,6 @@ vector<clause_t> decode_clauses(const cFunctionData *restrict attribute,
     int vi = RDWR.varindex - CCTK_FirstVarIndexI(gi);
     assert(vi >= 0 && vi < CCTK_NumVarsInGroupI(gi));
     int tl = RDWR.timelevel;
-    if(rdwr == rdwr_t::read && RDWR.where_rd == 0)
-        continue;
-    if(rdwr == rdwr_t::write && RDWR.where_wr == 0)
-        continue;
-    if(rdwr == rdwr_t::invalid && RDWR.where_inv == 0)
-        continue;
     int where;
     switch (rdwr) {
     case rdwr_t::read:
@@ -989,6 +983,8 @@ vector<clause_t> decode_clauses(const cFunctionData *restrict attribute,
     default:
       assert(0);
     }
+    if(where == 0)
+        continue;
     valid_t valid;
     valid.valid_int = where & CCTK_VALID_INTERIOR;
     valid.valid_outer = where & CCTK_VALID_BOUNDARY;

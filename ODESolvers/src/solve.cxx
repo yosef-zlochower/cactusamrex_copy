@@ -221,7 +221,7 @@ template <size_t N>
 void update_valid(const statecomp_t &var, const array<const statecomp_t *, N> &rhs_n) {
     int tl = 0;
     for(const statecomp_t *rhs : rhs_n) {
-        for(int i = 0; i < var.groupdatas.size(); i++) {
+        for(size_t i = 0; i < var.groupdatas.size(); i++) {
             auto& g_var = *var.groupdatas.at(i);
             auto& g_rhs = *rhs->groupdatas.at(i);
             for(size_t vi = 0; vi < g_var.numvars; vi++) {
@@ -229,7 +229,6 @@ void update_valid(const statecomp_t &var, const array<const statecomp_t *, N> &r
                 auto& v_rhs = g_rhs.valid.at(vi).at(0);
                 v_var.set( v_rhs.get() & v_var.get(), [](){ return "RHS";} );
             }
-            std::cout << ">> Update Valid: " << g_var.groupname << " -> " << g_var.valid.at(0).at(0).get() << std::endl;
         }
     }
 }
