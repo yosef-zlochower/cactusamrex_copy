@@ -193,7 +193,7 @@ template <int ORDER> struct interp1d<VC, POLY, ORDER> {
     constexpr int i1min = ORDER - imax;
     constexpr int i1max = ORDER - imin;
     // nvcc doesn't accept the constexpr terms below
-#ifndef __CUDACC__
+#if(!defined(__CUDACC__) && !defined(__HIPCC__))
     const auto abs0 = [](auto x) { return x >= 0 ? x : -x; };
     static_assert(abs0(imin - i0min) <= required_ghosts, "");
     static_assert(abs0(imin - i0max) <= required_ghosts, "");
@@ -244,7 +244,7 @@ template <int ORDER> struct interp1d<CC, POLY, ORDER> {
     constexpr int imin = 0;
     constexpr int imax = ORDER;
     // nvcc doesn't accept the constexpr terms below
-#ifndef __CUDACC__
+#if(!defined(__CUDACC__) && !defined(__HIPCC__))
     const auto abs0 = [](auto x) { return x >= 0 ? x : -x; };
     static_assert(abs0(imin - i0) <= required_ghosts, "");
     static_assert(abs0(imax - i0) <= required_ghosts, "");
@@ -333,7 +333,7 @@ template <int ORDER> struct interp1d<CC, CONS, ORDER> {
     constexpr int imin = 0;
     constexpr int imax = ORDER;
     // nvcc doesn't accept the constexpr terms below
-#ifndef __CUDACC__
+#if(!defined(__CUDACC__) && !defined(__HIPCC__))
     const auto abs0 = [](auto x) { return x >= 0 ? x : -x; };
     static_assert(abs0(imin - i0) <= required_ghosts, "");
     static_assert(abs0(imax - i0) <= required_ghosts, "");
