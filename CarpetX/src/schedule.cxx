@@ -1524,7 +1524,7 @@ int Evolve(tFleshConfig *config) {
     rat64 iteration = ghext->patchdata.at(0).leveldata.at(0).iteration;
     for (const auto &patchdata : ghext->patchdata)
       for (const auto &leveldata : patchdata.leveldata)
-        iteration = min(iteration, leveldata.iteration);
+        iteration = Arith::min(iteration, leveldata.iteration);
 
     // Loop over all levels, in batches that combine levels that don't
     // subcycle. The level range is [min_level, max_level).
