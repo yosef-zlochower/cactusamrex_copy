@@ -607,7 +607,7 @@ void interp3d(const T *restrict const crseptr,
   };
 
   // TODO: Use `loop_region` from driver.cxx (to be moved to loop.hxx)
-#ifndef __CUDACC__
+#if(!defined(__CUDACC__) && !defined(__HIPCC__))
   // CPU
 
   for (int k = targetbox.smallEnd()[2]; k <= targetbox.bigEnd()[2]; ++k)
