@@ -285,7 +285,7 @@ extern "C" void CarpetX_Interpolate(const CCTK_POINTER_TO_CONST cctkGH_,
                                     const CCTK_INT *restrict const varinds,
                                     const CCTK_INT *restrict const operations,
                                     const CCTK_POINTER resultptrs_) {
-#ifdef __CUDACC__
+#if(defined(__CUDACC__) || defined(__HIPCC__))
   abort();
 #else
 
