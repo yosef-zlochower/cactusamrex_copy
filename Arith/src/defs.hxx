@@ -16,7 +16,7 @@
 
 // For CUDA: Declare whether a function should live on the device or
 // the host (or both)
-#ifdef __CUDACC__
+#if(defined(__CUDACC__) || defined(__HIPCC__))
 #define ARITH_DEVICE __device__
 #define ARITH_HOST __host__
 #else
