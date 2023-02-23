@@ -25,7 +25,12 @@
 #include <array>
 #include <cassert>
 #include <cstdlib>
+#ifdef __clang__
+#include <experimental/filesystem>
+using namespace std::experimental;
+#else
 #include <filesystem>
+#endif
 #include <fstream>
 #include <iomanip>
 #include <memory>
