@@ -45,7 +45,7 @@ loop_region(const F &f, const Arith::vect<int, dim> &imin,
   if (any(imax <= imin))
     return;
 
-#ifndef __CUDACC__
+#if(!defined(__CUDACC__) && !defined(__HIPCC__))
   // CPU
   for (int k = imin[2]; k < imax[2]; ++k) {
     for (int j = imin[1]; j < imax[1]; ++j) {
@@ -321,7 +321,7 @@ void BoundaryCondition::apply_on_face_symbcxyz(
     for (int comp = 0; comp < ncomps; ++comp) {
       const CCTK_REAL dirichlet_value = groupdata.dirichlet_values.at(comp);
       Loop::GF3D2<CCTK_REAL> var(layout, destptr + comp * layout.np);
-      // #ifndef __CUDACC__
+      // #if(!defined(__CUDACC__) && !defined(__HIPCC__))
       // #pragma omp task final(true) untied
       // #endif
       loop_region(
@@ -417,7 +417,7 @@ void BoundaryCondition::apply_on_face_symbcxyz(
       assert(fabs(reflection_parity) == 1);
 
       Loop::GF3D2<CCTK_REAL> var(layout, destptr + comp * layout.np);
-      // #ifndef __CUDACC__
+      // #if(!defined(__CUDACC__) && !defined(__HIPCC__))
       // #pragma omp task final(true) untied
       // #endif
       loop_region(
