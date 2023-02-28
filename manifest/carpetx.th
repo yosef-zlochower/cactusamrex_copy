@@ -110,7 +110,7 @@ CactusUtils/Vectors
 !TARGET   = $ARR
 !TYPE     = git
 !URL      = https://github.com/EinsteinToolkit/$1-$2.git
-!REPO_PATH = $1-$2
+!REPO_PATH = ../$1-$2
 !CHECKOUT = ExternalLibraries/OpenCL ExternalLibraries/pciutils
 ExternalLibraries/FFTW3
 ExternalLibraries/GSL
@@ -125,7 +125,7 @@ ExternalLibraries/zlib
 !TARGET   = $ARR
 !TYPE     = git
 !URL      = https://github.com/rhaas80/$1-$2.git
-!REPO_PATH = $1-$2
+!REPO_PATH = ../$1-$2
 !CHECKOUT = ExternalLibraries/CUDA
 ExternalLibraries/ADIOS
 #DISABLED ExternalLibraries/CUDA
@@ -147,7 +147,7 @@ ExternalLibraries/openPMD
 
 !TARGET   = $ARR
 !TYPE     = git
-!URL      = https://github.com/dradice/Boost.git/trunk
+!URL      = https://github.com/dradice/Boost.git
 !REPO_PATH = ../$2
 !CHECKOUT =
 ExternalLibraries/Boost
