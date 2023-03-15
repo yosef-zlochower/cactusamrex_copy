@@ -127,7 +127,7 @@ ExternalLibraries/zlib
 !URL      = https://github.com/rhaas80/$1-$2.git
 !REPO_PATH = ../$1-$2
 !CHECKOUT = ExternalLibraries/CUDA
-ExternalLibraries/ADIOS
+ExternalLibraries/ADIOS2
 #DISABLED ExternalLibraries/CUDA
 ExternalLibraries/AMReX
 ExternalLibraries/NSIMD
